@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso_nobatch import LinearDynamicalSystem
+from torchid.linearsiso import LinearDynamicalSystem
 import matplotlib.pyplot as plt
 import time
 
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     # coefficients of a 2nd order oscillator
 #    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
 #    f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.float, requires_grad=True)  # f_1, f_2
-    b_coeff = torch.tensor([0.0306464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-    f_coeff = torch.tensor([-1.0, 0.9], dtype=torch.float, requires_grad=True)  # f_1, f_2
+    b_coeff = torch.tensor([0.01, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
+    f_coeff = torch.tensor([-0.9, 0.0], dtype=torch.float, requires_grad=True)  # f_1, f_2
 
     # Setup optimizer
     params_net = [b_coeff, f_coeff]

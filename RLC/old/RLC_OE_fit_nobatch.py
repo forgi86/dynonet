@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso_nobatch import LinearDynamicalSystem
+from torchid.old.linearsiso_nobatch import LinearDynamicalSystem
 import matplotlib.pyplot as plt
 import time
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "RLC_data_id.csv"))
+    df_X = pd.read_csv(os.path.join("../data", "RLC_data_id.csv"))
     t = np.array(df_X[COL_T], dtype=np.float32)
     y = np.array(df_X[COL_Y], dtype=np.float32)
     x = np.array(df_X[COL_X], dtype=np.float32)
