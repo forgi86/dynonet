@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linear_dyn_sp import SecondOrderDynamical
+from torchid.linearsiso_nobatch import LinearDynamicalSystem
 import matplotlib.pyplot as plt
 import time
 
@@ -46,14 +46,14 @@ if __name__ == '__main__':
     y_nonoise = np.copy(x[:, [0]])
 
     # Second-order dynamical system custom defined
-    G = SecondOrderDynamical.apply
+    G = LinearDynamicalSystem.apply
 
     # Prepare data
     u_torch = torch.tensor(u, dtype=torch.float, requires_grad=False)
     y_meas_torch = torch.tensor(y_noise, dtype=torch.float)
     y_true_torch = torch.tensor(y_nonoise, dtype=torch.float)
-    y_0 = torch.zeros(n_f, dtype=torch.float)
-    u_0 = torch.zeros(n_b, dtype=torch.float)
+    y_0 = torch.zeros((n_batch, n_f), dtype=torch.float)
+    u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
     # coefficients of a 2nd order oscillator
 #    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
 #    f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.float, requires_grad=True)  # f_1, f_2
