@@ -66,6 +66,10 @@ class SecondOrderDynamical(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+
+        import pydevd
+        pydevd.settrace(suspend=False, trace_only_current_thread=True)
+
         """
         In the backward pass we receive a Tensor containing the gradient of the loss
         with respect to the output, and we need to compute the gradient of the loss
