@@ -59,7 +59,7 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         # detach tensors so we can cast to numpy
         b_coeff, f_coeff, u_in, y_init, u_init = b_coeff.detach(), f_coeff.detach(), u_in.detach(), y_init.detach(), u_init.detach()
         f_np = np.concatenate(([1.0], f_coeff.numpy()))
-        b_np = b_coeff.numpy()
+        b_np = np.concatenate(([0.0], b_coeff.numpy()))
         zi = lfiltic_vec(b_np, f_np, y_init.numpy(), u_init.numpy())  # initial conditions for simulation
 
         y_out, _ = sp.signal.lfilter(b_np, f_np, u_in, axis=0, zi=zi.T)
@@ -84,25 +84,23 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         b_coeff, f_coeff, u_in, y_0, u_0, y_out = ctx.saved_tensors
         grad_b = grad_f = grad_u = grad_y0 = grad_u0 = None
 
-        dtype_np = u_in.numpy().dtype
-
         N = u_in.shape[0]
         batch_size = u_in.shape[1]
         n_b = b_coeff.shape[0]  # number of coefficient of polynomial B(q)
         n_f = f_coeff.shape[0]  # number of coefficient of polynomial F(q)
 
-        f_np = np.concatenate(([1.0], f_coeff.numpy())).astype(dtype_np)
-        b_np = b_coeff.numpy()
+        f_np = np.concatenate(([1.0], f_coeff.numpy())).astype(u_in.numpy().dtype)
+        b_np = np.concatenate(([0.0], b_coeff.numpy())).astype(u_in.numpy().dtype)
 
-        d0_np = np.array([1.0], dtype=dtype_np)
-        d1_np = np.array([0.0, 1.0], dtype=dtype_np)
+        #d0_np = np.array([1.0], dtype=u_in.numpy().dtype)
+        d1_np = np.array([0.0, 1.0], dtype=u_in.numpy().dtype)
         #d2_np = np.array([0.0, 0.0, 1.0], dtype=u_in.numpy().dtype)
 
 
         if ctx.needs_input_grad[0]: # b_coeff
             # compute forward sensitivities w.r.t. the b_i parameters
             sens_b = np.zeros_like(u_in, shape=(N, batch_size, n_b))
-            sens_b[:, :, 0] = sp.signal.lfilter(d0_np, f_np, u_in, axis=0)
+            sens_b[:, :, 0] = sp.signal.lfilter(d1_np, f_np, u_in, axis=0)
 
             for idx_coeff in range(1, n_b):
                 #sens_b[:, :, 1] = 0.0
@@ -127,21 +125,15 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         if ctx.needs_input_grad[2]: # u_in
 
             # compute jacobian w.r.t. u
-            grad_output_flip = grad_output.numpy()[::-1, :]
-            grad_u = scipy.signal.lfilter(b_np, f_np, grad_output_flip, axis=0)
-            grad_u = np.array(grad_u[::-1, :]).astype(dtype_np)
-            grad_u = torch.as_tensor(grad_u)
-
-            #grad_u = torch.as_tensor(np.zeros_like(u_in, shape=(N, batch_size)))
-            #u_imp = scipy.signal.unit_impulse(N, idx=None, dtype=u_in.numpy().dtype)
-            #g_imp = torch.as_tensor(sp.signal.lfilter(b_np, f_np, u_imp).astype(u_in.numpy().dtype))
-            #g_imp = g_imp.view(1, -1)
-            #for idx_time in range(N):
-            #    grad_u[idx_time, :] = g_imp[:, 0:N-idx_time].matmul(grad_output[idx_time:, :])  #grad_output_t[idx_time:, :].matmul(g_imp[:, 0:N-idx_time])
+            grad_u = torch.as_tensor(np.zeros_like(u_in, shape=(N, batch_size)))
+            u_imp = scipy.signal.unit_impulse(N, idx=None, dtype=u_in.numpy().dtype)
+            g_imp = torch.as_tensor(sp.signal.lfilter(b_np, f_np, u_imp))
+            g_imp = g_imp.view(1, -1)
+            for idx_time in range(N):
+                grad_u[idx_time, :] = g_imp[:, 0:N-idx_time].matmul(grad_output[idx_time:, :])  #grad_output_t[idx_time:, :].matmul(g_imp[:, 0:N-idx_time])
 
             #for batch_idx in range(batch_size):
-        #np.correlate(grad_output[0, :], g_imp[0, :], 'same')
-        #np.correlate(g_imp[0, :], grad_output[:, 0], 'same')
+
 
         return grad_b, grad_f, grad_u, grad_y0, grad_u0
 
@@ -187,13 +179,13 @@ if __name__ == '__main__':
     n_batch = 1
     n_b = 2
     n_f = 2
-    N = 10
+    N = 100
     u_in = torch.rand((N, n_batch), dtype=torch.double, requires_grad=True)
     y_init = torch.zeros((n_batch, n_f), dtype=torch.double)
     u_init = torch.zeros((n_batch, n_b), dtype=torch.double)
 
     # coefficients of a 2nd order oscillator
-    b_coeff = torch.tensor([0.0706464146944544, 0, 0], dtype=torch.double, requires_grad=True)  # b_1, b_2
+    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.double, requires_grad=True)  # b_1, b_2
     f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.double, requires_grad=True)  # f_1, f_2
     G = LinearDynamicalSystemFunction.apply
 

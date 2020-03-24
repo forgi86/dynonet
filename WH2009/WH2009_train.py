@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
+import util.metrics
 
 class StaticNonLin(nn.Module):
 
@@ -14,10 +15,15 @@ class StaticNonLin(nn.Module):
         super(StaticNonLin, self).__init__()
 
         self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.Tanh(),
-            nn.Linear(20, 1)
+            nn.Linear(1, 10),  # 2 states, 1 input
+            nn.ELU(),
+            nn.Linear(10, 1)
         )
+
+        #for m in self.net.modules():
+        #    if isinstance(m, nn.Linear):
+        #        nn.init.normal_(m.weight, mean=0, std=1e-1)
+        #        nn.init.constant_(m.bias, val=0)
 
     def forward(self, y_lin):
         y_nl = y_lin + self.net(y_lin)
@@ -33,8 +39,10 @@ if __name__ == '__main__':
     # Settings
     add_noise = True
     lr = 1e-4
-    num_iter = 20000
+    num_iter = 40000
     test_freq = 100
+    n_fit = 100000
+    decimate = 1
     n_batch = 1
     n_b = 3
     n_f = 3
@@ -56,27 +64,29 @@ if __name__ == '__main__':
     t = np.arange(N)*ts
 
     # Fit data
-    n_fit = 100000
-    y_fit = y[:n_fit]
-    u_fit = u[:n_fit]
-    t_fit = t[0:n_fit]
+    y_fit = y[:n_fit:decimate]
+    u_fit = u[:n_fit:decimate]
+    t_fit = t[0:n_fit:decimate]
 
 
     # Prepare data
     u_fit_torch = torch.tensor(u_fit, dtype=torch.float, requires_grad=False)
     y_fit_torch = torch.tensor(y_fit, dtype=torch.float)
-    y_0 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
+
 
     # Second-order dynamical system custom defined
-    b1_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float)
-    f1_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float)
+    b1_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
+    f1_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
     G1 = LinearDynamicalSystem(b1_coeff, f1_coeff)
+    y_init_1 = torch.zeros((n_batch, n_f), dtype=torch.float)
+    u_init_1 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
     # Second-order dynamical system custom defined
-    b2_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float)
-    f2_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float)
+    b2_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
+    f2_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
     G2 = LinearDynamicalSystem(b2_coeff, f2_coeff)
+    y_init_2 = torch.zeros((n_batch, n_f), dtype=torch.float)
+    u_init_2 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
     # Static sandwitched non-linearity
     F_nl = StaticNonLin()
@@ -96,9 +106,9 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y1_lin = G1(u_fit_torch, y_0, u_0)
+        y1_lin = G1(u_fit_torch, y_init_1, u_init_1)
         y1_nl = F_nl(y1_lin)
-        y_hat = G2(y1_nl, y_0, u_0)
+        y_hat = G2(y1_nl, y_init_2, u_init_2)
 
         # Compute fit loss
         err_fit = y_fit_torch - y_hat
@@ -111,20 +121,37 @@ if __name__ == '__main__':
 
         # Optimize
         loss.backward()
+
+        if itr == 100:
+            pass
         optimizer.step()
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
+    # In[To numpy]
+    y_hat = y_hat.detach().numpy()
+    y1_lin = y1_lin.detach().numpy()
+    y1_nl = y1_nl.detach().numpy()
+
+
     # In[Plot]
     plt.figure()
     plt.plot(t_fit, y_fit, 'k', label="$y$")
-    plt.plot(t_fit, y_hat.detach().numpy(), 'b', label="$\hat y$")
+    plt.plot(t_fit, y_hat, 'b', label="$\hat y$")
     plt.legend()
 
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
+
+    plt.figure()
+    plt.plot(y1_lin, y1_nl)
+    # In[Plot]
+    e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
+    print(f"RMSE: {e_rms:.2f}")
+
+
 
 
 

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso import LinearDynamicalSystem
+from torchid.old.linearsiso import LinearDynamicalSystem
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn

@@ -1,10 +1,9 @@
 import torch
-from torchid.linearsiso import LinearDynamicalSystem
-import numpy as np
+from torchid.old.linearsiso import LinearDynamicalSystemFunction
 import matplotlib.pyplot as plt
 from torch.autograd import gradcheck
 from torch.autograd.gradcheck import get_numerical_jacobian, get_analytical_jacobian
-
+import time
 
 # copied from torch.autograd.gradcheck
 def istuple(obj):
@@ -27,7 +26,7 @@ def _as_tuple(x):
 
 if __name__ == '__main__':
 
-    G = LinearDynamicalSystem.apply
+    G = LinearDynamicalSystemFunction.apply
 
     # In[Setup problem]
     n_batch = 1
@@ -39,7 +38,7 @@ if __name__ == '__main__':
     u_0 = torch.zeros((n_batch, n_b), dtype=torch.double)
 
     # coefficients of a 2nd order oscillator
-    b_coeff = torch.tensor([0.0706464146944544], dtype=torch.double, requires_grad=True)  # b_1, b_2
+    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.double, requires_grad=True)  # b_1, b_2
     f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.double, requires_grad=True)  # f_1, f_2
     inputs = (b_coeff, f_coeff, u_in, y_0, u_0)
 
