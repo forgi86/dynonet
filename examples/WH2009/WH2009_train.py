@@ -9,15 +9,16 @@ import torch.nn as nn
 
 import util.metrics
 
+
 class StaticNonLin(nn.Module):
 
     def __init__(self):
         super(StaticNonLin, self).__init__()
 
         self.net = nn.Sequential(
-            nn.Linear(1, 10),  # 2 states, 1 input
+            nn.Linear(1, 40),  # 2 states, 1 input
             nn.ELU(),
-            nn.Linear(10, 1)
+            nn.Linear(40, 1)
         )
 
         #for m in self.net.modules():
@@ -38,7 +39,7 @@ if __name__ == '__main__':
 
     # Settings
     add_noise = True
-    lr = 1e-4
+    lr = 2e-4
     num_iter = 40000
     test_freq = 100
     n_fit = 100000
@@ -117,7 +118,9 @@ if __name__ == '__main__':
 
         LOSS.append(loss.item())
         if itr % test_freq == 0:
-            print(f'Iter {itr} | Fit Loss {loss_fit:.6f}')
+            with torch.no_grad():
+                RMSE = torch.sqrt(loss)
+            print(f'Iter {itr} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.4f}')
 
         # Optimize
         loss.backward()
@@ -130,10 +133,10 @@ if __name__ == '__main__':
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
     # In[To numpy]
+
     y_hat = y_hat.detach().numpy()
     y1_lin = y1_lin.detach().numpy()
     y1_nl = y1_nl.detach().numpy()
-
 
     # In[Plot]
     plt.figure()
@@ -145,11 +148,28 @@ if __name__ == '__main__':
     plt.plot(LOSS)
     plt.grid(True)
 
+    # In[Plot static non-linearity]
+
+    y1_lin_min = np.min(y1_lin)
+    y1_lin_max = np.max(y1_lin)
+
+    in_nl = np.arange(y1_lin_min, y1_lin_max, (y1_lin_max- y1_lin_min)/1000).astype(np.float32).reshape(-1, 1)
+
+    with torch.no_grad():
+        out_nl = F_nl(torch.as_tensor(in_nl))
+
     plt.figure()
-    plt.plot(y1_lin, y1_nl)
+    plt.plot(in_nl, out_nl, 'b')
+    plt.plot(in_nl, out_nl, 'b')
+    #plt.plot(y1_lin, y1_nl, 'b*')
+    plt.xlabel('Static non-linearity input (-)')
+    plt.ylabel('Static non-linearity input (-)')
+    plt.grid(True)
+
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
     print(f"RMSE: {e_rms:.2f}")
+
 
 
 

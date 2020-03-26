@@ -48,7 +48,7 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, b_coeff, f_coeff, u_in, y_init, u_init):
+    def forward(ctx, b_coeff, f_coeff, u_in, y_0, u_0):
         """
         In the forward pass we receive a Tensor containing the input and return
         a Tensor containing the output. ctx is a context object that can be used
@@ -57,15 +57,15 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         """
 
         # detach tensors so we can cast to numpy
-        b_coeff, f_coeff, u_in, y_init, u_init = b_coeff.detach(), f_coeff.detach(), u_in.detach(), y_init.detach(), u_init.detach()
+        b_coeff, f_coeff, u_in, y_0, u_0 = b_coeff.detach(), f_coeff.detach(), u_in.detach(), y_0.detach(), u_0.detach()
         f_np = np.concatenate(([1.0], f_coeff.numpy()))
         b_np = b_coeff.numpy()
-        zi = lfiltic_vec(b_np, f_np, y_init.numpy(), u_init.numpy())  # initial conditions for simulation
+        zi = lfiltic_vec(b_np, f_np, y_0.numpy(), u_0.numpy())  # initial conditions for simulation
 
         y_out, _ = sp.signal.lfilter(b_np, f_np, u_in, axis=0, zi=zi.T)
         y_out = torch.as_tensor(y_out, dtype=u_in.dtype)
 
-        ctx.save_for_backward(b_coeff, f_coeff, u_in, y_init, u_init, y_out)
+        ctx.save_for_backward(b_coeff, f_coeff, u_in, y_0, u_0, y_out)
         return y_out
 
     @staticmethod
@@ -84,6 +84,7 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         b_coeff, f_coeff, u_in, y_0, u_0, y_out = ctx.saved_tensors
         grad_b = grad_f = grad_u = grad_y0 = grad_u0 = None
 
+
         dtype_np = u_in.numpy().dtype
 
         N = u_in.shape[0]
@@ -93,6 +94,7 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
 
         f_np = np.concatenate(([1.0], f_coeff.numpy())).astype(dtype_np)
         b_np = b_coeff.numpy()
+
 
         d0_np = np.array([1.0], dtype=dtype_np)
         d1_np = np.array([0.0, 1.0], dtype=dtype_np)
@@ -104,7 +106,10 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
             # compute forward sensitivities w.r.t. the b_i parameters
             if product_imp:
                 sens_b = np.zeros_like(u_in, shape=(N, batch_size, n_b))
-                sens_b[:, :, 0] = sp.signal.lfilter(d0_np, f_np, u_in, axis=0)
+                u_0 = np.array(u_0)
+                u_in_long = np.vstack((u_0[:, ::-1].T, u_in))
+                sens_b0 = sp.signal.lfilter(d0_np, f_np, u_in_long, axis=0)
+                sens_b[:, :, 0]  = sens_b0[n_b:, :]
                 for idx_coeff in range(1, n_b):
                     sens_b[idx_coeff:, :, idx_coeff] = sens_b[:-idx_coeff, :, 0]
                 sens_b = torch.as_tensor(sens_b)
@@ -131,7 +136,7 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
                 # compute vector-jacobian product for f
                 grad_f = grad_output.view(N*batch_size, 1).t().matmul(sens_f.view(N*batch_size, n_f))
             else:
-                sens_f1 = sp.signal.lfilter(d1_np, f_np, -y_out, axis=0)
+                sens_f1, _ = sp.signal.lfilter(d1_np, f_np, -y_out, axis=0, zi=zi.T)
                 grad_output_ext = np.r_[grad_output, np.zeros((n_f - 1, 1))]
                 grad_f = scipy.signal.correlate(grad_output_ext, sens_f1, 'valid').astype(dtype_np).transpose()
                 grad_f = torch.as_tensor(grad_f)
@@ -212,17 +217,26 @@ if __name__ == '__main__':
     n_batch = 1
     n_b = 2
     n_f = 2
-    N = 10
-    u_in = torch.rand((N, n_batch), dtype=torch.double, requires_grad=True)
-    y_init = torch.zeros((n_batch, n_f), dtype=torch.double, requires_grad=True)
-    u_init = torch.zeros((n_batch, n_b), dtype=torch.double)
+    N = 200
+    u_in = torch.rand((N, n_batch), dtype=torch.double, requires_grad=False)
+    y_0 = torch.tensor([[0.0, 0.0]])
+    #y_init = torch.zeros((n_batch, n_f), dtype=torch.double, requires_grad=False)
+    u_0 = torch.tensor([[2.0, 2.0]]) #torch.zeros((n_batch, n_b), dtype=torch.double)
 
     # coefficients of a 2nd order oscillator
-    b_coeff = torch.tensor([0.0706464146944544, 0, 0], dtype=torch.double, requires_grad=True)  # b_1, b_2
+    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.double, requires_grad=True)  # b_1, b_2
     f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.double, requires_grad=True)  # f_1, f_2
     G = LinearDynamicalSystemFunction.apply
 
-    inputs = (b_coeff, f_coeff, u_in, y_init, u_init)
+    inputs = (b_coeff, f_coeff, u_in, y_0, u_0)
+
+
+    # In[builtin gradient check]
+    test = gradcheck(G, inputs, eps=1e-6, atol=1e-4, raise_exception=False)
+    if test:
+        print("OK!")
+    else:
+        print("Fail!")
 
     # In[Forward pass]
     y_out = G(*inputs)
@@ -245,32 +259,32 @@ if __name__ == '__main__':
     # In[Plot derivatives]
 
     fig, ax = plt.subplots(2, 1)
-    ax[0].plot(numerical[0][0, :], 'b', label='$\\tilde{b}_1$')
-    ax[0].plot(numerical[0][1, :], 'k', label='$\\tilde{b}_2$')
+    ax[0].plot(numerical[0][0, :], 'b', label='$\\tilde{b}_1$ num')
+    ax[0].plot(numerical[0][1, :], 'k', label='$\\tilde{b}_2$ num')
     ax[0].grid(True)
     ax[0].legend()
 
-    ax[1].plot(numerical[1][0, :], 'b', label='$\\tilde{f}_1$')
-    ax[1].plot(numerical[1][1, :], 'k', label='$\\tilde{f}_2$')
+    ax[1].plot(numerical[1][0, :], 'b', label='$\\tilde{f}_1$ num')
+    ax[1].plot(numerical[1][1, :], 'k', label='$\\tilde{f}_2$ num')
     ax[1].grid(True)
     ax[1].legend()
 
-
+    # In[Plot derivatives]
     fig, ax = plt.subplots(2, 1)
-    ax[0].plot(numerical[0][0, :], 'b', label='$\\tilde{b}_1$')
-    ax[0].plot(analytical[0][0, :], 'b*', label='$\\tilde{b}_1$')
+    ax[0].plot(numerical[0][0, :], 'b', label='$\\tilde{b}_0$ num')
+    ax[0].plot(analytical[0][0, :], 'b*', label='$\\tilde{b}_0$ an' )
 
-    ax[0].plot(numerical[0][1, :], 'k', label='$\\tilde{b}_2$')
-    ax[0].plot(analytical[0][1, :], 'k*', label='$\\tilde{b}_2$')
+    ax[0].plot(numerical[0][1, :], 'k', label='$\\tilde{b}_1$ num')
+    ax[0].plot(analytical[0][1, :], 'k*', label='$\\tilde{b}_1$ an')
 
     ax[0].grid(True)
     ax[0].legend()
 
-    ax[1].plot(numerical[1][0, :], 'b', label='$\\tilde{f}_1$')
-    ax[1].plot(analytical[1][0, :], 'b*', label='$\\tilde{f}_1$')
+    ax[1].plot(numerical[1][0, :], 'b', label='$\\tilde{f}_1$ num')
+    ax[1].plot(analytical[1][0, :], 'b*', label='$\\tilde{f}_1$ an')
 
-    ax[1].plot(numerical[1][1, :], 'k', label='$\\tilde{f}_2$')
-    ax[1].plot(analytical[1][1, :], 'k*', label='$\\tilde{f}_2$')
+    ax[1].plot(numerical[1][1, :], 'k', label='$\\tilde{f}_2$ num')
+    ax[1].plot(analytical[1][1, :], 'k*', label='$\\tilde{f}_2$ an')
 
     ax[1].grid(True)
     ax[1].legend()
@@ -280,8 +294,8 @@ if __name__ == '__main__':
     # delayed sensitivities match!
 
     fig, ax = plt.subplots(2, 1)
-    ax[0].plot(numerical[0][0, 0:-1], 'b', label='$\\tilde{b}_1$')
-    ax[0].plot(numerical[0][1, 1:], 'k', label='$\\tilde{b}_2$')
+    ax[0].plot(numerical[0][0, 0:-1], 'b', label='$\\tilde{b}_0$')
+    ax[0].plot(numerical[0][1, 1:], 'k', label='$\\tilde{b}_1$')
     ax[0].grid(True)
     ax[0].legend()
 
@@ -290,8 +304,5 @@ if __name__ == '__main__':
     ax[1].grid(True)
     ax[1].legend()
 
-
-    # In[builtin gradient check]
-    test = gradcheck(G, inputs, eps=1e-6, atol=1e-4, raise_exception=True)
 
 
