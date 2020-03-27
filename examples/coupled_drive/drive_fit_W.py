@@ -15,20 +15,21 @@ class StaticNonLin(nn.Module):
     def __init__(self):
         super(StaticNonLin, self).__init__()
 
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.Tanh(),
-            nn.Linear(20, 1)
-        )
+        #self.net = nn.Sequential(
+        #    nn.Linear(1, 20),  # 2 states, 1 input
+        #    nn.ReLU(),
+        #    nn.Linear(20, 1)
+        #)
 
         #for m in self.net.modules():
         #    if isinstance(m, nn.Linear):
-        #        nn.init.normal_(m.weight, mean=0, std=1e-1)
+        #        nn.init.normal_(m.weight, mean=0, std=1e-4)
         #        nn.init.constant_(m.bias, val=0)
 
     def forward(self, y_lin):
-        #y_nl = -nn.ReLU()(-y_lin) + self.net(y_lin)
-        y_nl = self.net(y_lin)
+        #y_nl = self.net(y_lin)#
+        #y_nl = torch.abs(y_lin) #+ self.net(y_lin)  #
+        y_nl = torch.abs(y_lin)
         return y_nl
 
 
@@ -39,28 +40,29 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     # Settings
-    lr = 2e-4
-    num_iter = 40000
+    add_noise = True
+    lr = 1e-4
+    num_iter = 4000000
     test_freq = 100
-    n_fit = 100000 #100000
+    n_fit = 500
     decimate = 1
     n_batch = 1
     n_b = 3
     n_f = 3
 
     # Column names in the dataset
-    COL_F = ['fs']
-    COL_U = ['uBenchMark']
-    COL_Y = ['yBenchMark']
+    # Column names in the dataset
+    COL_U = ['u1']
+    COL_Y = ['z1']
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "WienerHammerBenchmark.csv"))
+    df_X = pd.read_csv(os.path.join("data", "DATAPRBS.csv"))
 
     # Extract data
     y = np.array(df_X[COL_Y], dtype=np.float32)
     u = np.array(df_X[COL_U], dtype=np.float32)
-    fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32)
     N = y.size
+    fs = 50  # Sampling frequency (Hz)
     ts = 1/fs
     t = np.arange(N)*ts
 
@@ -76,26 +78,20 @@ if __name__ == '__main__':
 
 
     # Second-order dynamical system custom defined
-    b1_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
-    f1_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
-    G1 = LinearDynamicalSystem(b1_coeff, f1_coeff)
+    b1_coeff = np.array([0.0, 0.1], dtype=np.float32)  # b_0, b_1, b_2
+    f1_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32) # a_1, a_2, a_3
+
+    G_lin = LinearDynamicalSystem(b1_coeff, f1_coeff)
     y_init_1 = torch.zeros((n_batch, n_f), dtype=torch.float)
     u_init_1 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
-    # Second-order dynamical system custom defined
-    b2_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
-    f2_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
-    G2 = LinearDynamicalSystem(b2_coeff, f2_coeff)
-    y_init_2 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_init_2 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
     # Static sandwitched non-linearity
     F_nl = StaticNonLin()
 
     # Setup optimizer
     optimizer = torch.optim.Adam([
-        {'params': G1.parameters(), 'lr': lr},
-        {'params': G2.parameters(), 'lr': lr},
+        {'params': G_lin.parameters(), 'lr': lr},
         {'params': F_nl.parameters(), 'lr': lr},
     ], lr=lr)
 
@@ -107,9 +103,8 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y1_lin = G1(u_fit_torch, y_init_1, u_init_1)
-        y1_nl = F_nl(y1_lin)
-        y_hat = G2(y1_nl, y_init_2, u_init_2)
+        y_lin = G_lin(u_fit_torch, y_init_1, u_init_1)
+        y_hat = F_nl(y_lin)
 
         # Compute fit loss
         err_fit = y_fit_torch - y_hat
@@ -124,28 +119,16 @@ if __name__ == '__main__':
 
         # Optimize
         loss.backward()
-
-        if itr == 100:
-            pass
         optimizer.step()
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
-    # In[Save model]
-    if not os.path.exists("models"):
-        os.makedirs("models")
-    model_filename = "model_WH"
-
-    torch.save(G1.state_dict(), os.path.join("models", f"{model_filename}_G1.pkl"))
-    torch.save(F_nl.state_dict(), os.path.join("models", f"{model_filename}_F_nl.pkl"))
-    torch.save(G2.state_dict(), os.path.join("models", f"{model_filename}_G2.pkl"))
-
     # In[To numpy]
 
     y_hat = y_hat.detach().numpy()
-    y1_lin = y1_lin.detach().numpy()
-    y1_nl = y1_nl.detach().numpy()
+    y_lin = y_lin.detach().numpy()
+
 
     # In[Plot]
     plt.figure()
@@ -159,8 +142,8 @@ if __name__ == '__main__':
 
     # In[Plot static non-linearity]
 
-    y1_lin_min = np.min(y1_lin)
-    y1_lin_max = np.max(y1_lin)
+    y1_lin_min = np.min(y_lin)
+    y1_lin_max = np.max(y_lin)
 
     in_nl = np.arange(y1_lin_min, y1_lin_max, (y1_lin_max- y1_lin_min)/1000).astype(np.float32).reshape(-1, 1)
 
@@ -178,6 +161,14 @@ if __name__ == '__main__':
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
     print(f"RMSE: {e_rms:.2f}")
+
+
+    # In[Analysis]
+    import control
+
+    Gg_lin = control.TransferFunction(G_lin.b_coeff.detach().numpy(), np.r_[1.0, G_lin.f_coeff.detach().numpy()], ts)
+    mag, phase, omega = control.bode(Gg_lin)
+
 
 
 
