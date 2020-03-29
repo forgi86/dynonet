@@ -63,7 +63,7 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         b_np = b_coeff.numpy()
         zi = lfiltic_vec(b_np, f_np, y_init.numpy(), u_init.numpy())  # initial conditions for simulation
 
-        y_out, _ = sp.signal.lfilter(b_np, f_np, u_in, axis=0, zi=zi.T)
+        y_out, _ = sp.signal.lfilter(b_np, f_np, u_in, axis=-1, zi=zi)
         y_out = torch.as_tensor(y_out, dtype=u_in.dtype)
 
         ctx.save_for_backward(b_coeff, f_coeff, u_in, y_init, u_init, y_out)
@@ -87,8 +87,8 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
 
         dtype_np = u_in.numpy().dtype
 
-        N = u_in.shape[0]
-        batch_size = u_in.shape[1]
+        N = u_in.shape[-1]
+        batch_size = u_in.shape[0]
         n_b = b_coeff.shape[0]  # number of coefficient of polynomial B(q)
         n_f = f_coeff.shape[0]  # number of coefficient of polynomial F(q)
 
@@ -99,79 +99,68 @@ class LinearDynamicalSystemFunction(torch.autograd.Function):
         d1_np = np.array([0.0, 1.0], dtype=dtype_np)
         #d2_np = np.array([0.0, 0.0, 1.0], dtype=u_in.numpy().dtype)
 
-        product_imp = True
-
         if ctx.needs_input_grad[0]: # b_coeff
             # compute forward sensitivities w.r.t. the b_i parameters
-            if product_imp:
-                sens_b = np.zeros_like(u_in, shape=(N, batch_size, n_b))
-                sens_b[:, :, 0] = sp.signal.lfilter(d0_np, f_np, u_in, axis=0)
-                for idx_coeff in range(1, n_b):
-                    sens_b[idx_coeff:, :, idx_coeff] = sens_b[:-idx_coeff, :, 0]
-                sens_b = torch.as_tensor(sens_b)
+            sens_b = np.zeros_like(u_in, shape=(batch_size, N, n_b))
+            sens_b[:, :, 0] = sp.signal.lfilter(d0_np, f_np, u_in, axis=-1)
+            for idx_coeff in range(1, n_b):
+                sens_b[:, idx_coeff:, idx_coeff] = sens_b[:, :-idx_coeff, 0]
+            sens_b = torch.as_tensor(sens_b)
 
-                # compute vector-jacobian product for b
-                grad_b = grad_output.view(N*batch_size, 1).t().matmul(sens_b.view(N*batch_size, n_b))
-            else:
-                sens_b0 = sp.signal.lfilter(d0_np, f_np, u_in, axis=0)
-                grad_output_ext = np.r_[grad_output, np.zeros((n_b - 1, 1))]
-                grad_b = scipy.signal.correlate(grad_output_ext, sens_b0, 'valid').astype(dtype_np).transpose()
-                grad_b = torch.as_tensor(grad_b)
+            # compute vector-jacobian product for b
+            grad_b = grad_output.view(N*batch_size, 1).t().matmul(sens_b.view(N*batch_size, n_b))
+
 
         if ctx.needs_input_grad[1]: # f_coeff
+            # compute forward sensitivities w.r.t. the f_i parameters
+            sens_f = np.zeros_like(u_in, shape=(batch_size, N, n_f))
+            sens_f[:, :, 0] = sp.signal.lfilter(d1_np, f_np, -y_out, axis=-1)
+            for idx_coeff in range(1, n_f):
+                sens_f[:, idx_coeff:, idx_coeff] = sens_f[:, :-idx_coeff, 0]
+            sens_f = torch.as_tensor(sens_f)
+            # compute vector-jacobian product for f
+            grad_f = grad_output.view(N*batch_size, 1).t().matmul(sens_f.view(N*batch_size, n_f))
 
-            if product_imp:
-                # compute forward sensitivities w.r.t. the f_i parameters
-                sens_f = np.zeros_like(u_in, shape=(N, batch_size, n_f))
-                sens_f[:, :, 0] = sp.signal.lfilter(d1_np, f_np, -y_out, axis=0)
-                for idx_coeff in range(1, n_f):
-                    #sens_f[:, :, 1] = 0.0
-                    sens_f[idx_coeff:, :,  idx_coeff] = sens_f[:-idx_coeff, :,  0]
-                sens_f = torch.as_tensor(sens_f)
-
-                # compute vector-jacobian product for f
-                grad_f = grad_output.view(N*batch_size, 1).t().matmul(sens_f.view(N*batch_size, n_f))
-            else:
-                sens_f1 = sp.signal.lfilter(d1_np, f_np, -y_out, axis=0)
-                grad_output_ext = np.r_[grad_output, np.zeros((n_f - 1, 1))]
-                grad_f = scipy.signal.correlate(grad_output_ext, sens_f1, 'valid').astype(dtype_np).transpose()
-                grad_f = torch.as_tensor(grad_f)
 
         if ctx.needs_input_grad[2]: # u_in
-
             # compute jacobian w.r.t. u
-            grad_output_flip = grad_output.numpy()[::-1, :]
-            grad_u = scipy.signal.lfilter(b_np, f_np, grad_output_flip, axis=0)
-            grad_u = np.array(grad_u[::-1, :]).astype(dtype_np)
+            grad_output_flip = grad_output.numpy()[:, ::-1]
+            grad_u = scipy.signal.lfilter(b_np, f_np, grad_output_flip, axis=-1)
+            grad_u = np.array(grad_u[:, ::-1]).astype(dtype_np)
             grad_u = torch.as_tensor(grad_u)
-
-            #grad_u = torch.as_tensor(np.zeros_like(u_in, shape=(N, batch_size)))
-            #u_imp = scipy.signal.unit_impulse(N, idx=None, dtype=u_in.numpy().dtype)
-            #g_imp = torch.as_tensor(sp.signal.lfilter(b_np, f_np, u_imp).astype(u_in.numpy().dtype))
-            #g_imp = g_imp.view(1, -1)
-            #for idx_time in range(N):
-            #    grad_u[idx_time, :] = g_imp[:, 0:N-idx_time].matmul(grad_output[idx_time:, :])  #grad_output_t[idx_time:, :].matmul(g_imp[:, 0:N-idx_time])
-
-            #for batch_idx in range(batch_size):
-        #np.correlate(grad_output[0, :], g_imp[0, :], 'same')
-        #np.correlate(g_imp[0, :], grad_output[:, 0], 'same')
-
-        # if ctx.needs_input_grad[3]: # y_init
-        #     init_np = np.zeros((1, n_f)).astype(dtype_np)
-        #     num_np = np.array([0.0])
-        #     zi = lfiltic_vec([[0.0]], f_np, init_np)
-        #     sens_y0 = np.zeros_like(u_in, shape=(N, batch_size, n_f))
-        #     sens_y0[:, :, 0], _ = sp.signal.lfilter([0.0], f_np, u_in, axis=0, zi=zi.T)
-        #     for idx_coeff in range(1, n_f):
-        #         sens_y0[idx_coeff:, :, idx_coeff] = sens_y0[:-idx_coeff, :, 0]
-        #     sens_y0 = torch.as_tensor(sens_y0)
-        #
-        #     grad_y0 = grad_output.view(N * batch_size, 1).t().matmul(sens_y0.view(N * batch_size, n_f))
 
         return grad_b, grad_f, grad_u, grad_y0, grad_u0
 
 
 class LinearDynamicalSystem(torch.nn.Module):
+    r"""Applies a Linear SISO system to an input signal.
+
+    Args:
+        b_coeff (np.array): Learnable coefficients of the transfer function numerator
+        f_coeff (np.array): Learnable coefficients of the transfer function denominator
+
+    Shape:
+        - Input: :math:`(B, T)`
+        - Output: :math:`(B, T)`
+
+    Attributes:
+        b_coeff (Tensor): the learnable coefficients of the transfer function numerator
+        f_coeff (Tensor): the learnable coefficients of the transfer function denominator
+
+    Examples::
+
+        >>> batch_size = 1
+        >>> n_b = 2
+        >>> n_f = 2
+        >>> seq_len = 100
+        >>> u_in = torch.ones((batch_size, seq_len))
+        >>> y_0 = torch.zeros((batch_size, n_f))
+        >>> u_0 = torch.zeros((batch_size, n_b))
+        >>> b_coeff = np.array([0, 0.0706464146944544])  # b_0, b_1
+        >>> f_coeff = np.array([-1.87212998940304, 0.942776404097492])  # f_1, f_2
+        >>> G = LinearDynamicalSystem(b_coeff, f_coeff)
+        >>> y_out = G(u_in, y_0, u_0)
+    """
     def __init__(self, b_coeff, f_coeff):
         super(LinearDynamicalSystem, self).__init__()
         self.b_coeff = Parameter(torch.tensor(b_coeff))
@@ -228,10 +217,12 @@ if __name__ == '__main__':
 
     # In[Setup problem]
     n_batch = 1
+    n_ch = 1 # number of channel. Only 1 is supported here...
     n_b = 2
     n_f = 2
-    N = 10
-    u_in = torch.rand((N, n_batch), dtype=torch.double, requires_grad=True)
+    seq_len = 10
+
+    u_in = torch.rand((n_batch,  seq_len), dtype=torch.double, requires_grad=True)
     y_init = torch.zeros((n_batch, n_f), dtype=torch.double, requires_grad=False)
     u_init = torch.zeros((n_batch, n_b), dtype=torch.double, requires_grad=False)
 

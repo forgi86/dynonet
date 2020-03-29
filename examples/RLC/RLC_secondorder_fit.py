@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso import LinearDynamicalSystemFunction
+from torchid.linearsiso import SecondOrderOscillator
 import matplotlib.pyplot as plt
 import time
 
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     # Settings
     add_noise = True
     lr = 1e-3
-    num_iter = 3000
+    num_iter = 5000
     test_freq = 100
     n_batch = 1
     n_b = 2
@@ -45,8 +45,6 @@ if __name__ == '__main__':
     y_noise = np.copy(x_noise[:, [0]])
     y_nonoise = np.copy(x[:, [0]])
 
-    # Second-order dynamical system custom defined
-    G = LinearDynamicalSystemFunction.apply
 
     # Prepare data
     u_torch = torch.tensor(u, dtype=torch.float, requires_grad=False)
@@ -58,10 +56,12 @@ if __name__ == '__main__':
 #    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
 #    f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.float, requires_grad=True)  # f_1, f_2
     b_coeff = torch.tensor([0.01, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-    f_coeff = torch.tensor([-0.9, 0.0], dtype=torch.float, requires_grad=True)  # f_1, f_2
+    rho = np.array(0.0)
+    psi = np.array(0.0)
+    G = SecondOrderOscillator(b_coeff, rho, psi)
 
     # Setup optimizer
-    params_net = [b_coeff, f_coeff]
+    params_net = G.parameters()
     optimizer = torch.optim.Adam([
         {'params': params_net,    'lr': lr},
     ], lr=lr)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y_hat = G(b_coeff, f_coeff, u_torch, y_0, u_0)
+        y_hat = G(u_torch, y_0, u_0)
 
         # Compute fit loss
         err_fit = y_meas_torch - y_hat

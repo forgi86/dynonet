@@ -19,7 +19,8 @@ if __name__ == '__main__':
     COL_R = ['r']
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "WH_CombinedZeroMultisineSinesweep.csv"))
+    #df_X = pd.read_csv(os.path.join("data", "WH_CombinedZeroMultisineSinesweep.csv"))
+    df_X = pd.read_csv(os.path.join("data", "WH_TestDataset.csv"))
 
     # Extract data
     y = np.array(df_X[COL_Y], dtype=np.float32)
