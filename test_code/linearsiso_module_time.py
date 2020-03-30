@@ -1,5 +1,5 @@
 import torch
-from torchid.linearsiso import LinearDynamicalSystem
+from torchid.old.linearsiso_TB import LinearDynamicalSystem
 import numpy as np
 import matplotlib.pyplot as plt
 import time

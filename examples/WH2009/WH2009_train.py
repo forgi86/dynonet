@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso import LinearDynamicalSystem
+from torchid.functional.linearsiso import LinearDynamicalSystem
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -71,8 +71,8 @@ if __name__ == '__main__':
 
 
     # Prepare data
-    u_fit_torch = torch.tensor(u_fit, dtype=torch.float, requires_grad=False)
-    y_fit_torch = torch.tensor(y_fit, dtype=torch.float)
+    u_fit_torch = torch.tensor(u_fit.reshape(1, -1), dtype=torch.float, requires_grad=False)
+    y_fit_torch = torch.tensor(y_fit.reshape(1, -1), dtype=torch.float)
 
 
     # Second-order dynamical system custom defined

@@ -74,6 +74,26 @@ def lfiltic_vec(b, a, y, x=None):
     return zi
 
 
+def lfilter_mimo(b, a, u_in):
+    batch_size, in_ch, seq_len = u_in.shape
+    out_ch, _, _ = a.shape
+    y_out = np.zeros_like(u_in, shape=(batch_size, out_ch, seq_len))
+    for out_idx in range(out_ch):
+        for in_idx in range(in_ch):
+            y_out[:, out_idx, :] += scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :],
+                                                         u_in[:, in_idx, :], axis=-1)
+    return y_out
+
+def lfilter_mimo_components(b, a, u_in):
+    batch_size, in_ch, seq_len = u_in.shape
+    out_ch, _, _ = a.shape
+    y_comp_out = np.zeros_like(u_in, shape=(batch_size, out_ch, in_ch, seq_len))
+    for out_idx in range(out_ch):
+        for in_idx in range(in_ch):
+            y_comp_out[:, out_idx, in_idx, :] += scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :], u_in[:, in_idx, :], axis=-1)
+    return y_comp_out # [B, O, I, T]
+
+
 if __name__ == '__main__':
 
     batch_size = 5

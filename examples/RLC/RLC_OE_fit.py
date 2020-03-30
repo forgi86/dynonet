@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso import LinearDynamicalSystemFunction
+from torchid.functional.linearsiso import LinearSisoFunction
 import matplotlib.pyplot as plt
 import time
 
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     y_nonoise = np.copy(x[:, [0]])
 
     # Second-order dynamical system custom defined
-    G = LinearDynamicalSystemFunction.apply
+    G = LinearSisoFunction.apply
 
     # Prepare data
     u_torch = torch.tensor(u, dtype=torch.float, requires_grad=False)

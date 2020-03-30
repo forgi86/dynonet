@@ -1,5 +1,5 @@
 import torch
-from torchid.linearsiso import LinearDynamicalSystem, SecondOrderOscillator
+from torchid.old.linearsiso_TB import SecondOrderOscillator
 import numpy as np
 import matplotlib.pyplot as plt
 

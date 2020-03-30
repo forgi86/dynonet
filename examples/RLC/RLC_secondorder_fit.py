@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.linearsiso import SecondOrderOscillator
+from torchid.old.linearsiso_TB import SecondOrderOscillator
 import matplotlib.pyplot as plt
 import time
 
