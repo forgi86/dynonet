@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sp
 import scipy.signal
 import time
-from util.filtering import lfiltic_vec, lfilter_mimo,  lfilter_mimo_components
+from util.filtering import lfiltic_vec, lfilter_mimo_channels_first, lfilter_mimo_components_channels_first
 from torch.nn.parameter import Parameter
 
 
@@ -73,8 +73,8 @@ class LinearMimoFunction(torch.autograd.Function):
 
         #zi = lfiltic_vec(b_poly, a_poly, y_init.numpy(), u_init.numpy())  # initial conditions for simulation
 
-        y_out_comp = lfilter_mimo_components(b_poly, a_poly, u_in)  # [B, T, O, I]
-        y_out = np.sum(y_out_comp, axis=-1)  # [B, T, O]
+        y_out_comp = lfilter_mimo_components_channels_first(b_poly, a_poly, u_in)  # [batch_size, out_channels, in_channels, seq_len]
+        y_out = np.sum(y_out_comp, axis=2)  # [batch_size, out_channels, seq_len]
         y_out = torch.as_tensor(y_out, dtype=u_in.dtype)
         y_out_comp = torch.as_tensor(y_out_comp)
 
@@ -100,7 +100,7 @@ class LinearMimoFunction(torch.autograd.Function):
 
         out_channels, in_channels, n_b = b_coeff.shape
         _, _, n_a = a_coeff.shape
-        batch_size, seq_len, _ = u_in.shape
+        batch_size, _, seq_len = u_in.shape
 
 
         a_poly = np.empty_like(a_coeff, shape=(out_channels, in_channels, n_a + 1))
@@ -113,39 +113,40 @@ class LinearMimoFunction(torch.autograd.Function):
 
         if ctx.needs_input_grad[0]:  # b_coeff
             # compute forward sensitivities w.r.t. the b_i parameters
-            sens_b = np.zeros_like(u_in, shape=(batch_size, seq_len, out_channels, in_channels, n_b)) # [B, T, O, I, D]
+            sens_b = np.zeros_like(u_in, shape=(batch_size, out_channels, in_channels, n_b, seq_len))
 
             for out_idx in range(out_channels):  # it is like a lfilter_mimo_components, can be optimized
                 for in_idx in range(in_channels):
-                    sens_b[:, :, out_idx, in_idx, 0] = sp.signal.lfilter(d0_np, a_poly[out_idx, in_idx, :], u_in[:, :, in_idx])
+                    sens_b[:, out_idx, in_idx, 0, :] = sp.signal.lfilter(d0_np, a_poly[out_idx, in_idx, :], u_in[:, in_idx, :])
             for idx_coeff in range(1, n_b):
-                sens_b[:, idx_coeff:, :, :, idx_coeff] = sens_b[:, :-idx_coeff, :, :, 0]
+                sens_b[:, :, :, idx_coeff, idx_coeff:] = sens_b[:, :, :, 0, :-idx_coeff]
             sens_b = torch.as_tensor(sens_b)
-            grad_b = torch.einsum('bto,btoid->oid', grad_output, sens_b)
+            #grad_b = torch.einsum('boidt,bqt->oid', sens_b, grad_output)
+            grad_b = torch.einsum('bot,boidt->oid', grad_output, sens_b)
 
         if ctx.needs_input_grad[1]:  # a_coeff
             # compute forward sensitivities w.r.t. the f_i parameters
-            sens_a = np.zeros_like(u_in, shape=(batch_size, seq_len, out_channels, in_channels, n_a))
+            sens_a = np.zeros_like(u_in, shape=(batch_size, out_channels, in_channels, n_a, seq_len))
             for out_idx in range(out_channels): # it is like a lfilter_mimo_components, can be optimized
                 for in_idx in range(in_channels):
-                    sens_a[:, :, out_idx, in_idx, 0] = sp.signal.lfilter(d1_np, a_poly[out_idx, in_idx, :], -y_out_comp[:, :, out_idx, in_idx], axis=-1)
+                    sens_a[:, out_idx, in_idx, 0, :] = sp.signal.lfilter(d1_np, a_poly[out_idx, in_idx, :], -y_out_comp[:, out_idx, in_idx, :], axis=-1)
 
             for idx_coeff in range(1, n_a):
-                sens_a[:, idx_coeff:, :, :, idx_coeff] = sens_a[:, :-idx_coeff, :, :, 0]
+                sens_a[:, :, :, idx_coeff, idx_coeff:] = sens_a[:, :, :, 0, :-idx_coeff]
             sens_a = torch.as_tensor(sens_a)
             # compute vector-jacobian product for f
-            grad_a =  torch.einsum('bto,btoid->oid', grad_output, sens_a)
+            grad_a =  torch.einsum('bot,boidt->oid', grad_output, sens_a)
 
 
         if ctx.needs_input_grad[2]: # u_in
             # compute jacobian w.r.t. u
-            grad_output_flip = grad_output.numpy()[:, ::-1, :]  # [B, T, O]
+            grad_output_flip = grad_output.numpy()[:, :, ::-1]
 
-            grad_u = np.zeros_like(u_in)  # [B, T, I]
+            grad_u = np.zeros_like(u_in)  # B, I, T
             for in_idx in range(in_channels):
                 for out_idx in range(out_channels):
-                    grad_u[:, :, in_idx] += scipy.signal.lfilter(b_poly[out_idx, in_idx, :], a_poly[out_idx, in_idx, :], grad_output_flip[:, :, out_idx], axis=-1)
-            grad_u = np.array(grad_u[:, ::-1, :]).astype(dtype_np)
+                    grad_u[:, in_idx, :] += scipy.signal.lfilter(b_poly[out_idx, in_idx, :], a_poly[out_idx, in_idx, :], grad_output_flip[:, out_idx, :], axis=-1)
+            grad_u = np.array(grad_u[:, :, ::-1]).astype(dtype_np)
 
             grad_u = torch.as_tensor(grad_u)
 
@@ -194,7 +195,7 @@ if __name__ == '__main__':
     G = LinearMimoFunction.apply
     y_0 = torch.tensor(0*np.random.randn(*(out_ch, in_ch, n_a)))
     u_0 = torch.tensor(0*np.random.randn(*(out_ch, in_ch, n_b)))
-    u_in = torch.tensor(1*np.random.randn(*(batch_size, seq_len, in_ch)), requires_grad=True)
+    u_in = torch.tensor(1*np.random.randn(*(batch_size, in_ch, seq_len)), requires_grad=True)
     inputs = (b_coeff, a_coeff, u_in, y_0, u_0)
 
     # In[Forward pass]

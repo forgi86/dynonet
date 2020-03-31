@@ -74,7 +74,7 @@ def lfiltic_vec(b, a, y, x=None):
     return zi
 
 
-def lfilter_mimo(b, a, u_in):
+def lfilter_mimo_channels_first(b, a, u_in):
     batch_size, in_ch, seq_len = u_in.shape
     out_ch, _, _ = a.shape
     y_out = np.zeros_like(u_in, shape=(batch_size, out_ch, seq_len))
@@ -84,14 +84,36 @@ def lfilter_mimo(b, a, u_in):
                                                          u_in[:, in_idx, :], axis=-1)
     return y_out
 
-def lfilter_mimo_components(b, a, u_in):
+
+def lfilter_mimo_components_channels_first(b, a, u_in):
     batch_size, in_ch, seq_len = u_in.shape
     out_ch, _, _ = a.shape
     y_comp_out = np.zeros_like(u_in, shape=(batch_size, out_ch, in_ch, seq_len))
     for out_idx in range(out_ch):
         for in_idx in range(in_ch):
-            y_comp_out[:, out_idx, in_idx, :] += scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :], u_in[:, in_idx, :], axis=-1)
+            y_comp_out[:, out_idx, in_idx, :] = scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :], u_in[:, in_idx, :], axis=-1)
     return y_comp_out  # [B, O, I, T]
+
+
+def lfilter_mimo(b, a, u_in):
+    batch_size, seq_len, in_ch = u_in.shape
+    out_ch, _, _ = a.shape
+    y_out = np.zeros_like(u_in, shape=(batch_size, seq_len, out_ch))
+    for out_idx in range(out_ch):
+        for in_idx in range(in_ch):
+            y_out[:, :, out_idx] += scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :],
+                                                         u_in[:, :, in_idx], axis=-1)
+    return y_out  # [B, T, O]
+
+
+def lfilter_mimo_components(b, a, u_in):
+    batch_size, seq_len, in_ch = u_in.shape
+    out_ch, _, _ = a.shape
+    y_comp_out = np.zeros_like(u_in, shape=(batch_size, seq_len, out_ch, in_ch))
+    for out_idx in range(out_ch):
+        for in_idx in range(in_ch):
+            y_comp_out[:, :, out_idx, in_idx] = scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :], u_in[:, :, in_idx], axis=-1)
+    return y_comp_out  # [B, T, O, I]
 
 
 if __name__ == '__main__':
@@ -100,7 +122,7 @@ if __name__ == '__main__':
     n_b = 2
     n_f = 2
     N = 100
-    u_in = np.random.rand(N, batch_size).astype(np.float)
+    u_in = np.random.rand(batch_size, N, 1).astype(np.float)
 
     y_init = np.random.rand(*(batch_size, n_f)).astype(np.float)
     u_init = np.random.rand(*(batch_size, n_b)).astype(np.float)
@@ -119,9 +141,10 @@ if __name__ == '__main__':
         zi_loop[batch_idx, :] = sp.signal.lfiltic(b_poly, f_poly, y_init[batch_idx, :], u_init[batch_idx, :])  # initial condition
 
 
-    yout_vec, _ = sp.signal.lfilter(b_poly, f_poly, u_in, axis=0, zi=zi.T)
+#    y_out = lfilter_mimo_components_channels_last
+#    yout_vec, _ = sp.signal.lfilter(b_poly, f_poly, u_in, axis=0, zi=zi.T)
 
-    yout_loop = np.empty_like(yout_vec)
-    for batch_idx in range(batch_size):
-        yout_loop[:, batch_idx] = sp.signal.lfilter(b_poly, f_poly, u_in[:, batch_idx], axis=0, zi=zi[batch_idx, :])[0]
+#    yout_loop = np.empty_like(yout_vec)
+#    for batch_idx in range(batch_size):
+#        yout_loop[:, batch_idx] = sp.signal.lfilter(b_poly, f_poly, u_in[:, batch_idx], axis=0, zi=zi[batch_idx, :])[0]
 
