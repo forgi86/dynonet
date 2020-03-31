@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import control
-from torchid.module.LTI_channels_last import LinearMimo
+from torchid.module.LTI import LinearMimo
 import util.metrics
 
 

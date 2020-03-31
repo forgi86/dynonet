@@ -2,12 +2,15 @@ import pandas as pd
 import numpy as np
 import os
 import torch
-from torchid.module.LTI_channels_last import LinearMimo
 import torch.nn as nn
+import torch.utils.data
+from torchid.module.LTI import LinearMimo
+
 
 import matplotlib.pyplot as plt
 import time
 import util.metrics
+
 
 class StaticNonLin(nn.Module):
 
@@ -37,10 +40,10 @@ class StaticNonLin(nn.Module):
 
 if __name__ == '__main__':
 
-    lr = 1e-4
-    num_iter = 100000
-    test_freq = 100
-    n_batch = 1
+    lr = 1e-3
+    epochs = 1000
+    test_freq = 1 # print a msg every epoch
+    batch_size = 16
 
     n_amp = 5 #  number of different amplitudes
     n_real = 20  # number of random phase multisine realizations
@@ -72,7 +75,32 @@ if __name__ == '__main__':
             data_mat[amp_idx, real_idx, :, :] = np.array(df_data)
     data_mat = data_mat.astype(np.float32)
 
-    data_mat_torch = torch.tensor(data_mat)
+    #data_mat_torch = torch.tensor(data_mat)  # A, R, T, C
+
+
+    class ParallelWHDataset(torch.utils.data.Dataset):
+        """Face Landmarks dataset."""
+
+        def __init__(self, data):
+            """
+            Args:
+                data (torch.Tensor): Tensor with data organized in.
+            """
+            self.data = torch.tensor(data)
+            self.n_amp, self.n_real, self.seq_len, self.n_channels = data.shape
+            self.len = n_amp * n_real
+            self._data = self.data.view(self.n_amp * self.n_real, self.seq_len, self.n_channels)
+
+        def __len__(self):
+            return self.len
+
+        def __getitem__(self, idx):
+            return self._data[idx, :, [0]], self._data[idx, :, [1]]
+
+
+    train_ds = ParallelWHDataset(data_mat)
+    train_dl = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+
 #    u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)
 #    y_meas_torch = torch.tensor(y[None, :, None],  dtype=torch.float, requires_grad=False)
 
@@ -83,8 +111,8 @@ if __name__ == '__main__':
     out_channels_1 = 2
     nb_1 = 3
     na_1 = 3
-    y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
-    u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
+    y0_1 = torch.zeros((batch_size, na_1), dtype=torch.float)
+    u0_1 = torch.zeros((batch_size, nb_1), dtype=torch.float)
     G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
 
     # Non-linear section
@@ -95,8 +123,8 @@ if __name__ == '__main__':
     out_channels_2 = 1
     nb_2 = 3
     na_2 = 3
-    y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
-    u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
+    y0_2 = torch.zeros((batch_size, na_2), dtype=torch.float)
+    u0_2 = torch.zeros((batch_size, nb_2), dtype=torch.float)
     G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
 
     # In[Initialize linear systems]
@@ -119,44 +147,38 @@ if __name__ == '__main__':
     # In[Training loop]
     LOSS = []
     start_time = time.time()
-    for itr in range(0, num_iter):
+    for epoch in range(epochs):
+        for u_torch, y_meas_torch in train_dl:
 
-        #    u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)
-        #    y_meas_torch = torch.tensor(y[None, :, None],  dtype=torch.float, requires_grad=False)
+            # Empty old gradients
+            optimizer.zero_grad()
 
-        optimizer.zero_grad()
+            # Simulate
+            y_lin_1 = G1(u_torch, y0_1, u0_1)
+            y_nl_1 = F_nl(y_lin_1)
+            y_lin_2 = G2(y_nl_1, y0_2, u0_2)
 
-        # Extract data
-        amp_idx = np.random.randint(0, n_amp)
-        real_idx = np.random.randint(0, n_real)
+            y_hat = y_lin_2
 
-        u_torch = data_mat_torch[amp_idx, real_idx, :, 0].view(1, -1, 1)
-        y_meas_torch = data_mat_torch[amp_idx, real_idx, :, 1].view(1, -1, 1)
+            # Compute fit loss
+            err_fit = y_meas_torch - y_hat
+            loss_fit = torch.mean(err_fit**2)
+            loss = loss_fit
 
-        # Simulate
-        y_lin_1 = G1(u_torch, y0_1, u0_1)
-        y_nl_1 = F_nl(y_lin_1)
-        y_lin_2 = G2(y_nl_1, y0_2, u0_2)
+            # Statistics
+            LOSS.append(loss.item())
 
-        y_hat = y_lin_2
+            # Optimize
+            loss.backward()
+            optimizer.step()
 
-        # Compute fit loss
-        err_fit = y_meas_torch - y_hat
-        loss_fit = torch.mean(err_fit**2)
-        loss = loss_fit
-
-        LOSS.append(loss.item())
-        if itr % test_freq == 0:
+        if epoch % test_freq == 0:
             with torch.no_grad():
                 RMSE = torch.sqrt(loss)
-            print(f'Iter {itr} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.4f}')
-
-        # Optimize
-        loss.backward()
-        optimizer.step()
+            print(f'Epoch {epoch} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.4f}')
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}") # 182 seconds
+    print(f"\nTrain time: {train_time:.2f}")  # 182 seconds
 
 
     # In[Save model]
@@ -190,9 +212,9 @@ if __name__ == '__main__':
 
     # In[Metrics]
 
-    idx_metric = range(0, N_per_period)
-    e_rms = util.metrics.error_rmse(y[idx_metric], y_hat_np[idx_metric])
-    fit_idx = util.metrics.fit_index(y[idx_metric], y_hat_np[idx_metric])
-    r_sq = util.metrics.r_squared(y[idx_metric], y_hat_np[idx_metric])
+#    idx_metric = range(0, N_per_period)
+#    e_rms = util.metrics.error_rmse(y[idx_metric], y_hat_np[idx_metric])
+#    fit_idx = util.metrics.fit_index(y[idx_metric], y_hat_np[idx_metric])
+#    r_sq = util.metrics.r_squared(y[idx_metric], y_hat_np[idx_metric])
 
-    print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
+#    print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")

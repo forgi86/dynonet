@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import control
-from torchid.module.LTI_channels_last import LinearMimo
+from torchid.module.LTI import LinearMimo
 import util.metrics
 
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # In[Load dataset]
 
     #df_X = pd.read_csv(os.path.join("data", "ParWHData_Validation_Level1.csv"))
-    df_X = pd.read_csv(os.path.join("data", "ParWHData_ValidationArrow.csv"))
+    df_X = pd.read_csv(os.path.join("../data", "ParWHData_ValidationArrow.csv"))
 
     # Extract data
     y_meas = np.array(df_X['y'], dtype=np.float32)
@@ -72,11 +72,11 @@ if __name__ == '__main__':
     y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
     u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
     G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
-    G1.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G1.pkl")))
+    G1.load_state_dict(torch.load(os.path.join("../models", f"{model_filename}_G1.pkl")))
 
     # Non-linear section
     F_nl = StaticNonLin()
-    F_nl.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_F_nl.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join("../models", f"{model_filename}_F_nl.pkl")))
 
     # Second linear section
     in_channels_2 = 2
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
     u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
     G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
-    G2.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G2.pkl")))
+    G2.load_state_dict(torch.load(os.path.join("../models", f"{model_filename}_G2.pkl")))
 
     # In[Predict]
     u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
+from torchid.module.old.LTI_channels_first import LinearMimo
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn

@@ -1,5 +1,5 @@
 import torch
-from torchid.module.LTI import LinearMimo
+from torchid.module.old.LTI_channels_first import LinearMimo
 import numpy as np
 import matplotlib.pyplot as plt
 

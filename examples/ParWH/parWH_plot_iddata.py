@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     # Load dataset
     #df_X = pd.read_csv(os.path.join("data", "WH_CombinedZeroMultisineSinesweep.csv"))
-    df_X = pd.read_csv(os.path.join("data", "ParWHData_Estimation_Level1.csv"))
+    df_X = pd.read_csv(os.path.join("data", "ParWHData_Estimation_Level2.csv"))
     df_X.columns = ['amplitude', 'fs', 'lines'] + [TAG_U + str(i) for i in range(M)] + [TAG_Y + str(i) for i in range(M)] + ['?']
 
     # Extract data
