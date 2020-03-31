@@ -15,15 +15,15 @@ class StaticNonLin(nn.Module):
         super(StaticNonLin, self).__init__()
 
         self.net_1 = nn.Sequential(
-            nn.Linear(1, 10),  # 2 states, 1 input
+            nn.Linear(1, 20),  # 2 states, 1 input
             nn.ReLU(),
-            nn.Linear(10, 1)
+            nn.Linear(20, 1)
         )
 
         self.net_2 = nn.Sequential(
-            nn.Linear(1, 10),  # 2 states, 1 input
+            nn.Linear(1, 20),  # 2 states, 1 input
             nn.ReLU(),
-            nn.Linear(10, 1)
+            nn.Linear(20, 1)
         )
 
     def forward(self, u_lin):
@@ -54,12 +54,12 @@ if __name__ == '__main__':
     DF_COL = ['amplitude', 'fs', 'lines'] + [TAG_U + str(i) for i in range(n_real)] + [TAG_Y + str(i) for i in range(n_real)] + ['?']
 
     # Load dataset
-    dataset_list_level = ['ParWHData_Estimation_Level' + str(i) for i in range(1, 6)]
+    dataset_list_level = ['ParWHData_Estimation_Level' + str(i) for i in range(1, n_amp+1)]
 
     df_X_lst = []
     for dataset_name in dataset_list_level:
         dataset_filename = dataset_name + '.csv'
-        df_Xi = pd.read_csv(os.path.join("data", "ParWHData_Estimation_Level1.csv"))
+        df_Xi = pd.read_csv(os.path.join("data", dataset_filename))
         df_Xi.columns = DF_COL
         df_X_lst.append(df_Xi)
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     for amp_idx in range(n_amp):
         for real_idx in range(n_real):
             tag_u = 'u' + str(real_idx)
-            tag_y = 'u' + str(real_idx)
+            tag_y = 'y' + str(real_idx)
             df_data = df_X_lst[amp_idx][[tag_u, tag_y]]  #np.array()
             data_mat[amp_idx, real_idx, :, :] = np.array(df_data)
     data_mat = data_mat.astype(np.float32)
@@ -124,13 +124,14 @@ if __name__ == '__main__':
         #    u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)
         #    y_meas_torch = torch.tensor(y[None, :, None],  dtype=torch.float, requires_grad=False)
 
+        optimizer.zero_grad()
+
+        # Extract data
         amp_idx = np.random.randint(0, n_amp)
         real_idx = np.random.randint(0, n_real)
 
         u_torch = data_mat_torch[amp_idx, real_idx, :, 0].view(1, -1, 1)
         y_meas_torch = data_mat_torch[amp_idx, real_idx, :, 1].view(1, -1, 1)
-
-        optimizer.zero_grad()
 
         # Simulate
         y_lin_1 = G1(u_torch, y0_1, u0_1)
@@ -146,7 +147,9 @@ if __name__ == '__main__':
 
         LOSS.append(loss.item())
         if itr % test_freq == 0:
-            print(f'Iter {itr} | Fit Loss {loss_fit:.8f}')
+            with torch.no_grad():
+                RMSE = torch.sqrt(loss)
+            print(f'Iter {itr} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.4f}')
 
         # Optimize
         loss.backward()
@@ -170,16 +173,16 @@ if __name__ == '__main__':
     y_hat_np = y_hat.detach().numpy()[0, :, 0]
 
     # In[Plot]
-    fig, ax = plt.subplots(2, 1, sharex=True)
-    ax[0].plot(t, y, 'k', label="$y$")
-    ax[0].plot(t, y_hat_np, 'r', label="$y$")
+#    fig, ax = plt.subplots(2, 1, sharex=True)
+#    ax[0].plot(t, y, 'k', label="$y$")
+#    ax[0].plot(t, y_hat_np, 'r', label="$y$")
 
-    ax[0].legend()
-    ax[0].grid()
+#    ax[0].legend()
+#    ax[0].grid()
 
-    ax[1].plot(t, u, 'k', label="$u$")
-    ax[1].legend()
-    ax[1].grid()
+#    ax[1].plot(t, u, 'k', label="$u$")
+#    ax[1].legend()
+#    ax[1].grid()
 
     plt.figure()
     plt.plot(LOSS)
