@@ -91,7 +91,7 @@ def lfilter_mimo_components(b, a, u_in):
     for out_idx in range(out_ch):
         for in_idx in range(in_ch):
             y_comp_out[:, out_idx, in_idx, :] += scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :], u_in[:, in_idx, :], axis=-1)
-    return y_comp_out # [B, O, I, T]
+    return y_comp_out  # [B, O, I, T]
 
 
 if __name__ == '__main__':

@@ -61,20 +61,20 @@ class LinearMimoFunction(torch.autograd.Function):
         b_coeff, a_coeff, u_in, y_0, u_0 = b_coeff.detach(), a_coeff.detach(), u_in.detach(), y_0.detach(), u_0.detach()
 
         # useful parameters
-        out_ch = b_coeff.shape[0]
-        in_ch = b_coeff.shape[1]
+        out_channels = b_coeff.shape[0]
+        in_channels = b_coeff.shape[1]
         n_a = a_coeff.shape[2]
 
         # construct the A(q) polynomial with coefficient a_0=1
-        a_poly = np.empty_like(a_coeff, shape=(out_ch, in_ch, n_a + 1))
+        a_poly = np.empty_like(a_coeff, shape=(out_channels, in_channels, n_a + 1))
         a_poly[:, :, 0] = 1
         a_poly[:, :, 1:] = a_coeff[:, :, :]
         b_poly = np.array(b_coeff)
 
         #zi = lfiltic_vec(b_poly, a_poly, y_init.numpy(), u_init.numpy())  # initial conditions for simulation
 
-        y_out_comp = lfilter_mimo_components(b_poly, a_poly, u_in)
-        y_out = np.sum(y_out_comp, axis=2)
+        y_out_comp = lfilter_mimo_components(b_poly, a_poly, u_in)  # [batch_size, out_channels, in_channels, seq_len]
+        y_out = np.sum(y_out_comp, axis=2)  # [batch_size, out_channels, seq_len]
         y_out = torch.as_tensor(y_out, dtype=u_in.dtype)
         y_out_comp = torch.as_tensor(y_out_comp)
 
@@ -83,40 +83,40 @@ class LinearMimoFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        """
+        In the backward pass we receive a Tensor containing the gradient of the loss
+        with respect to the output, and we need to compute the gradient of the loss
+        with respect to the input.
+        """
 
         debug = False
         if debug:
             import pydevd  # required to debug the backward pass. Why?!?
             pydevd.settrace(suspend=False, trace_only_current_thread=True)
 
-        """
-        In the backward pass we receive a Tensor containing the gradient of the loss
-        with respect to the output, and we need to compute the gradient of the loss
-        with respect to the input.
-        """
         b_coeff, a_coeff, u_in, y_0, u_0, y_out_comp = ctx.saved_tensors
         grad_b = grad_a = grad_u = grad_y0 = grad_u0 = None
         dtype_np = u_in.numpy().dtype
 
-        out_ch, in_ch, n_b = b_coeff.shape
+        out_channels, in_channels, n_b = b_coeff.shape
         _, _, n_a = a_coeff.shape
         batch_size, _, seq_len = u_in.shape
 
 
-        a_poly = np.empty_like(a_coeff, shape=(out_ch, in_ch, n_a + 1))
+        a_poly = np.empty_like(a_coeff, shape=(out_channels, in_channels, n_a + 1))
         a_poly[:, :, 0] = 1
         a_poly[:, :, 1:] = a_coeff[:, :, :]
         b_poly = np.array(b_coeff)  # not required?
 
-        d0_np = np.array([1.0], dtype=dtype_np) #np.ones_like(u_in, shape=(out_ch, in_ch, 1))
+        d0_np = np.array([1.0], dtype=dtype_np) #np.ones_like(u_in, shape=(out_channels, in_channels, 1))
         d1_np = np.array([0.0, 1.0], dtype=dtype_np)
 
         if ctx.needs_input_grad[0]:  # b_coeff
             # compute forward sensitivities w.r.t. the b_i parameters
-            sens_b = np.zeros_like(u_in, shape=(batch_size, out_ch, in_ch, n_b, seq_len))
+            sens_b = np.zeros_like(u_in, shape=(batch_size, out_channels, in_channels, n_b, seq_len))
 
-            for out_idx in range(out_ch):  # it is like a lfilter_mimo_components, can be optimized
-                for in_idx in range(in_ch):
+            for out_idx in range(out_channels):  # it is like a lfilter_mimo_components, can be optimized
+                for in_idx in range(in_channels):
                     sens_b[:, out_idx, in_idx, 0, :] = sp.signal.lfilter(d0_np, a_poly[out_idx, in_idx, :], u_in[:, in_idx, :])
             for idx_coeff in range(1, n_b):
                 sens_b[:, :, :, idx_coeff, idx_coeff:] = sens_b[:, :, :, 0, :-idx_coeff]
@@ -126,9 +126,9 @@ class LinearMimoFunction(torch.autograd.Function):
 
         if ctx.needs_input_grad[1]:  # a_coeff
             # compute forward sensitivities w.r.t. the f_i parameters
-            sens_a = np.zeros_like(u_in, shape=(batch_size, out_ch, in_ch, n_a, seq_len))
-            for out_idx in range(out_ch): # it is like a lfilter_mimo_components, can be optimized
-                for in_idx in range(in_ch):
+            sens_a = np.zeros_like(u_in, shape=(batch_size, out_channels, in_channels, n_a, seq_len))
+            for out_idx in range(out_channels): # it is like a lfilter_mimo_components, can be optimized
+                for in_idx in range(in_channels):
                     sens_a[:, out_idx, in_idx, 0, :] = sp.signal.lfilter(d1_np, a_poly[out_idx, in_idx, :], -y_out_comp[:, out_idx, in_idx, :], axis=-1)
 
             for idx_coeff in range(1, n_a):
@@ -143,8 +143,8 @@ class LinearMimoFunction(torch.autograd.Function):
             grad_output_flip = grad_output.numpy()[:, :, ::-1]
 
             grad_u = np.zeros_like(u_in)  # B, I, T
-            for in_idx in range(in_ch):
-                for out_idx in range(out_ch):
+            for in_idx in range(in_channels):
+                for out_idx in range(out_channels):
                     grad_u[:, in_idx, :] += scipy.signal.lfilter(b_poly[out_idx, in_idx, :], a_poly[out_idx, in_idx, :], grad_output_flip[:, out_idx, :], axis=-1)
             grad_u = np.array(grad_u[:, :, ::-1]).astype(dtype_np)
 
