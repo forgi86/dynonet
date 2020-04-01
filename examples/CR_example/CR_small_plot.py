@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     B = u.shape[0]  # number of participants (10)
     R = u.shape[1]  # number of realizations (7)
-    N = u.shape[2]  # time index (256)
+    N = u.shape[2]  # number of time samples (256)
 
     fs = 256.0  # Sampling frequency (Hz)
     ts = 1/fs

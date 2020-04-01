@@ -20,6 +20,10 @@ if __name__ == '__main__':
 
     data = mat_data['EEGdata']
     N = mat_data['EEGdata'].size  # participants
+    # R: number of multisine realizations (7)
+    # P: number of recorded periods per realization (210)
+    # S: number of samples per period (2048(
+
     R, P, S = mat_data['EEGdata'][0][0][0][0][0].shape  # realizations, periods, samples
 
     U = np.zeros((N, R, P, S))

@@ -7,49 +7,8 @@ import torch.nn as nn
 import control
 from torchid.module.LTI import LinearMimo
 import util.metrics
-
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net_1 = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-        self.net_2 = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-    def forward(self, u_lin):
-
-        y_nl_1 = self.net_1(u_lin[..., [0]])  # Process blocks individually
-        y_nl_2 = self.net_2(u_lin[..., [1]])  # Process blocks individually
-        y_nl = torch.cat((y_nl_1, y_nl_2), dim=-1)
-
-        return y_nl
-
-
-class StaticMimoNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticMimoNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(2, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 2)
-        )
-
-    def forward(self, u_lin):
-
-        y_nl = self.net(u_lin)  # Process blocks individually
-        return y_nl
+from examples.ParWH.common import  ParallelWHDataset
+from examples.ParWH.common import StaticMimoNonLin
 
 
 if __name__ == '__main__':
@@ -81,7 +40,7 @@ if __name__ == '__main__':
         df_X_lst.append(df_Xi)
 
 
-    df_X = df_X_lst[4]
+    df_X = df_X_lst[5]
 
     # Extract data
     y_meas = np.array(df_X['y'], dtype=np.float32)
@@ -136,6 +95,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(2, 1, sharex=True)
     ax[0].plot(t, y_meas, 'k', label="$y$")
     ax[0].plot(t, y_hat, 'r', label="$\hat y$")
+    ax[0].plot(t, y_meas - y_hat, 'g', label="$e$")
     ax[0].legend()
     ax[0].grid()
 

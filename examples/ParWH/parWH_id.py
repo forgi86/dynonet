@@ -5,60 +5,18 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 from torchid.module.LTI import LinearMimo
+from examples.ParWH.common import  ParallelWHDataset
+from examples.ParWH.common import StaticMimoNonLin
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import time
 import util.metrics
 
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net_1 = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-        self.net_2 = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-    def forward(self, u_lin):
-
-        y_nl_1 = self.net_1(u_lin[..., [0]])  # Process blocks individually
-        y_nl_2 = self.net_2(u_lin[..., [1]])  # Process blocks individually
-        y_nl = torch.cat((y_nl_1, y_nl_2), dim=-1)
-
-        return y_nl
-
-
-class StaticMimoNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticMimoNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(2, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 2)
-        )
-
-    def forward(self, u_lin):
-
-        y_nl = self.net(u_lin)  # Process blocks individually
-        return y_nl
-
-
 if __name__ == '__main__':
 
-    lr = 1e-4
-    epochs = 1000
+    lr = 1e-2
+    epochs = 2000
     test_freq = 1 # print a msg every epoch
     batch_size = 16
 
@@ -97,33 +55,6 @@ if __name__ == '__main__':
     data_train = data_mat[:, :-1, :, :]
     data_val = data_mat[:, [-1], :, :] # use
 
-    #data_mat_torch = torch.tensor(data_mat)  # A, R, T, C
-
-
-    class ParallelWHDataset(torch.utils.data.Dataset):
-        """Face Landmarks dataset."""
-
-        def __init__(self, data):
-            """
-            Args:
-                data (torch.Tensor): Tensor with data organized in.
-            """
-            self.data = torch.tensor(data)
-            self.n_amp, self.n_real, self.seq_len, self.n_channels = data.shape
-            self.len = self.n_amp * self.n_real
-            self._data = self.data.view(self.n_amp * self.n_real, self.seq_len, self.n_channels)
-
-        def __len__(self):
-            return self.len
-
-        def __getitem__(self, idx):
-            return self._data[idx, :, [0]], self._data[idx, :, [1]]
-
-
-
-#    u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)
-#    y_meas_torch = torch.tensor(y[None, :, None],  dtype=torch.float, requires_grad=False)
-
     # In[Set-up model]
 
     # First linear section
@@ -157,10 +88,11 @@ if __name__ == '__main__':
         G2.b_coeff[:, :, 0] = 0.1
         G1.b_coeff[:, :, 1] = 0.1
 
-        #G1.a_coeff[0, 0, 0] = -0.9
-        #G1.a_coeff[1, 0, 0] = 0.9
-        #G1.b_coeff[:, :, 0] = 0.1
-        #G1.b_coeff[:, :, 1] = 0.1
+        G1.a_coeff[:] = torch.randn((out_channels_1, in_channels_1, na_1))*0.01
+        G1.b_coeff[:] = torch.randn((out_channels_1, in_channels_1, nb_1))*0.01
+
+        G2.a_coeff[:] = torch.randn((out_channels_2, in_channels_2, na_2))*0.01
+        G2.b_coeff[:] = torch.randn((out_channels_2, in_channels_2, nb_2))*0.01
 
         #G2.a_coeff[0, 0, 0] = -0.9
         #G2.a_coeff[0, 1, 0] = 0.9
@@ -175,15 +107,19 @@ if __name__ == '__main__':
         {'params': G2.parameters(), 'lr': lr},
     ], lr=lr)
 
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=20, factor=0.1, min_lr=1e-6, verbose=True)
+
     # In[Setup data loaders]
-    train_ds = ParallelWHDataset(data_train)
+    train_ds = ParallelWHDataset(data_train)  # 19*5=95 samples
     train_dl = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
 
-    val_ds = ParallelWHDataset(data_val)
-    valid_dl = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, shuffle=True)
+    valid_ds = ParallelWHDataset(data_val)  # 5 samples
+    valid_dl = torch.utils.data.DataLoader(valid_ds, batch_size=batch_size, shuffle=True)
 
     # In[Training loop]
-    LOSS = []
+    LOSS_ITR = []
+    LOSS_TRAIN = []
+    LOSS_VAL = []
     start_time = time.time()
     for epoch in range(epochs):
         #loop = tqdm(train_dl)
@@ -191,63 +127,69 @@ if __name__ == '__main__':
         F_nl.train()
         G1.train()
 
-        loss_train = torch.tensor(0.0)
-        for u_torch, y_meas_torch in train_dl:
+        train_loss = torch.tensor(0.0)
+        for ub, yb in train_dl:
+
+            bs = ub.shape[0]  # length of this batch (normally batch_size, except the last of the epoch)
 
             # Empty old gradients
             optimizer.zero_grad()
 
             # Simulate
-            y_lin_1 = G1(u_torch, y0_1, u0_1)
+            y_lin_1 = G1(ub, y0_1, u0_1)
             y_nl_1 = F_nl(y_lin_1)
             y_lin_2 = G2(y_nl_1, y0_2, u0_2)
 
             y_hat = y_lin_2
 
             # Compute fit loss
-            err_fit = y_meas_torch[..., n_skip:, :] - y_hat[..., n_skip:, :]
-            loss_fit = torch.mean(err_fit**2)
-            loss = loss_fit
+            err_fit = yb[..., n_skip:, :] - y_hat[..., n_skip:, :]
+            loss = torch.mean(err_fit**2)
 
             with torch.no_grad():
-                loss_train += loss
+                train_loss += loss * bs
 
             # Statistics
-            LOSS.append(loss.item())
+            LOSS_ITR.append(loss.item())
 
             # Optimize
             loss.backward()
             optimizer.step()
 
-        loss_train = loss_train/len(train_ds)
-        #loop.set_description('Epoch {}/{}'.format(epoch + 1, epochs))
-        #loop.set_postfix(loss=loss.item(), mse=0.9)
 
-        #if epoch % test_freq == 0:
-        #    with torch.no_grad():
-        #        RMSE = 1000*torch.sqrt(loss)
-        #    print(f'Epoch {epoch} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.2f} mV')
-
-
+        # Model in evaluation mode
         G1.eval()
         F_nl.eval()
         G2.eval()
+
+        # Metrics
         with torch.no_grad():
-            loss_val = torch.tensor(0.0)
-            for u_torch, y_meas_torch in valid_dl:
+
+            train_loss = train_loss / len(train_ds)
+            RMSE_train = 1000*torch.sqrt(train_loss)
+            LOSS_TRAIN.append(train_loss.item())
+
+            val_loss = torch.tensor(0.0)
+            for ub, yb in valid_dl:
+
+                bs = ub.shape[0]
                 # Simulate
-                y_lin_1 = G1(u_torch, y0_1, u0_1)
+                y_lin_1 = G1(ub, y0_1, u0_1)
                 y_nl_1 = F_nl(y_lin_1)
                 y_lin_2 = G2(y_nl_1, y0_2, u0_2)
 
                 y_hat = y_lin_2
 
                 # Compute fit loss
-                err_val = y_meas_torch[..., n_skip:, :] - y_hat[..., n_skip:, :]
-                loss_val += torch.mean(err_val ** 2)
-            loss_val = loss_val/len(valid_dl)
+                err_val = yb[..., n_skip:, :] - y_hat[..., n_skip:, :]
+                val_loss += torch.mean(err_val ** 2) * bs
 
-        print(f'Epoch {epoch} | Train Loss {loss_train:.6f} | Validation Loss {loss_val:.6f}')
+            val_loss = val_loss / len(valid_ds)
+            LOSS_VAL.append(val_loss.item())
+
+        scheduler.step(val_loss)
+
+        print(f'Epoch {epoch} | Train Loss {train_loss:.6f} | Validation Loss {val_loss:.6f} | Train RMSE: {RMSE_train:.2f}')
 
 
 
@@ -282,9 +224,14 @@ if __name__ == '__main__':
 #    ax[1].grid()
 
     plt.figure()
-    plt.plot(LOSS)
+    plt.plot(LOSS_ITR)
     plt.grid(True)
 
+
+    plt.figure()
+    plt.plot(LOSS_TRAIN, 'r')
+    plt.plot(LOSS_VAL, 'g')
+    plt.grid(True)
 
     # In[Metrics]
 

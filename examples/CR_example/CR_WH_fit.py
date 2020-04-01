@@ -5,34 +5,8 @@ import torch.nn as nn
 import time
 import matplotlib.pyplot as plt
 import scipy.io
-import tqdm
+from examples.CR_example.common import CRSmallDataset, StaticNonLin, StaticMimoNonLin
 from torchid.module.LTI import LinearMimo
-
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net_1 = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-        self.net_2 = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-    def forward(self, u_lin):
-
-        y_nl_1 = self.net_1(u_lin[..., [0]])  # Process blocks individually
-        y_nl_2 = self.net_2(u_lin[..., [1]])  # Process blocks individually
-        y_nl = torch.cat((y_nl_1, y_nl_2), dim=-1)
-
-        return y_nl
 
 
 if __name__ == '__main__':
@@ -43,7 +17,7 @@ if __name__ == '__main__':
 
     # Overall parameters
     epochs = 10000  # gradient-based optimization steps
-    lr = 1e-4  # learning rate
+    lr = 1e-3  # learning rate
     test_freq = 10  # print message every test_freq iterations
     batch_size = 16
 
@@ -67,29 +41,6 @@ if __name__ == '__main__':
     n_y = 1  # number of outputs
 
 
-    class CRSmallDataset(torch.utils.data.Dataset):
-        """Face Landmarks dataset."""
-
-        def __init__(self, u, y):
-            """
-            Args:
-                u (torch.Tensor): Tensor with input data. # B R T
-                y (torch.Tensor): Tensor with input data. # B R T
-            """
-            self.u = torch.tensor(u)
-            self.y = torch.tensor(y)
-
-            self.B, self.R, self.T = self.u.shape
-            self.len = self.B * self.R
-
-            self._u = self.u.view(self.len, self.T, 1)
-            self._y = self.y.view(self.len, self.T, 1)
-
-        def __len__(self):
-            return self.len
-
-        def __getitem__(self, idx):
-            return self._u[idx, :], self._y[idx, :]
 
     train_ds = CRSmallDataset(u, y)
     train_dl = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
@@ -128,6 +79,13 @@ if __name__ == '__main__':
         G2.b_coeff[:, :, 0] = 0.1
         G1.b_coeff[:, :, 1] = 0.1
 
+        # Random initialization
+        G1.a_coeff[:] = torch.randn((out_channels_1, in_channels_1, na_1))*0.01
+        G1.b_coeff[:] = torch.randn((out_channels_1, in_channels_1, nb_1))*0.01
+
+        G2.a_coeff[:] = torch.randn((out_channels_2, in_channels_2, na_2))*0.01
+        G2.b_coeff[:] = torch.randn((out_channels_2, in_channels_2, nb_2))*0.01
+
     # In[Setup optimizer]
     optimizer = torch.optim.Adam([
         {'params': G1.parameters(),    'lr': lr},
@@ -136,38 +94,48 @@ if __name__ == '__main__':
     ], lr=lr)
 
     # In[Training loop]
-    LOSS = []
+    LOSS_ITR = []
+    LOSS_TRAIN = []
     start_time = time.time()
     for epoch in range(epochs):
         #loop = tqdm.tqdm(train_dl)
-        for u_torch, y_meas_torch in train_dl:
+        train_loss = torch.tensor(0.0)
+        for ub, yb in train_dl:
 
+            bs = ub.shape[0]
             # Empty old gradients
             optimizer.zero_grad()
 
             # Simulate
-            y_lin_1 = G1(u_torch, y0_1, u0_1)
+            y_lin_1 = G1(ub, y0_1, u0_1)
             y_nl_1 = F_nl(y_lin_1)
             y_lin_2 = G2(y_nl_1, y0_2, u0_2)
 
             y_hat = y_lin_2
 
             # Compute fit loss
-            err_fit = y_meas_torch - y_hat
+            err_fit = yb - y_hat
             loss_fit = torch.mean(err_fit**2)
             loss = loss_fit
 
             # Statistics
-            LOSS.append(loss.item())
+            with torch.no_grad():
+                train_loss += loss * bs
+                LOSS_ITR.append(loss.item())
+
 
             # Optimize
             loss.backward()
             optimizer.step()
 
-        if epoch % test_freq == 0:
-            with torch.no_grad():
-                RMSE = torch.sqrt(loss)
-            print(f'Epoch {epoch} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.4f}')
+        # Metrics
+        with torch.no_grad():
+            train_loss = train_loss / len(train_ds)
+            LOSS_TRAIN.append(train_loss.item())
+            if epoch % test_freq == 0:
+                with torch.no_grad():
+                    RMSE = torch.sqrt(train_loss)
+                print(f'Epoch {epoch} | Train Loss {train_loss:.6f} | RMSE:{RMSE:.4f}')
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")  # 182 seconds
@@ -184,4 +152,4 @@ if __name__ == '__main__':
 
     # In[Plot Loss]
     plt.figure()
-    plt.plot(LOSS)
+    plt.plot(LOSS_T)

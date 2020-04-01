@@ -38,7 +38,7 @@ class LinearMimo(torch.nn.Module):
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, n_b))
         self.a_coeff = Parameter(torch.zeros(out_channels, in_channels, n_a))
 
-    def forward(self, u_in, y_0, u_0):
+    def forward(self, u_in, y_0=None, u_0=None):
         return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_in, y_0, u_0)
 
 

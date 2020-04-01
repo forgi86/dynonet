@@ -49,7 +49,7 @@ class LinearMimoFunction(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, b_coeff, a_coeff, u_in, y_0, u_0):
+    def forward(ctx, b_coeff, a_coeff, u_in, y_0=None, u_0=None):
         """
         In the forward pass we receive a Tensor containing the input and return
         a Tensor containing the output. ctx is a context object that can be used
@@ -58,7 +58,14 @@ class LinearMimoFunction(torch.autograd.Function):
         """
 
         # detach tensors so we can cast to numpy
-        b_coeff, a_coeff, u_in, y_0, u_0 = b_coeff.detach(), a_coeff.detach(), u_in.detach(), y_0.detach(), u_0.detach()
+
+        b_coeff, a_coeff, u_in = b_coeff.detach(), a_coeff.detach(), u_in.detach()
+
+        if y_0 is not None:
+            y_0.detach()
+
+        if u_0 is not None:
+            u_0.detach()
 
         # useful parameters
         out_channels = b_coeff.shape[0]

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.old.LTI_channels_first import LinearMimo
+from torchid.module.LTI import LinearMimo
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -20,9 +20,9 @@ class StaticNonLin(nn.Module):
         )
 
     def forward(self, u_lin):
-        u_lin = torch.transpose(u_lin, (-2), (-1))
+        #u_lin = torch.transpose(u_lin, (-2), (-1))
         y_nl = u_lin + self.net(u_lin)
-        y_nl = torch.transpose(y_nl, (-2), (-1))
+        #y_nl = torch.transpose(y_nl, (-2), (-1))
         return y_nl
 
 
@@ -67,9 +67,9 @@ if __name__ == '__main__':
 
 
     # Prepare data
-    u_torch = torch.tensor(u[None, None, :], dtype=torch.float, requires_grad=False) # B, C, T
-    y_meas_torch = torch.tensor(y_noise[None, None, :], dtype=torch.float)
-    y_true_torch = torch.tensor(y_nonoise[None, None, :], dtype=torch.float)
+    u_torch = torch.tensor(u[None, :, None], dtype=torch.float, requires_grad=False) # B, C, T
+    y_meas_torch = torch.tensor(y_noise[None, :, None], dtype=torch.float)
+    y_true_torch = torch.tensor(y_nonoise[None, :, None], dtype=torch.float)
     y_0 = torch.zeros((n_batch, n_a), dtype=torch.float)
     u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y_lin = G(u_torch, y_0, u_0)
+        y_lin = G(u_torch)#, y_0, u_0)
         y_hat = nn_static(y_lin)
         y_hat = y_hat
 
