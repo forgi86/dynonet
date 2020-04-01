@@ -5,6 +5,7 @@ import torch.nn as nn
 import time
 import matplotlib.pyplot as plt
 import scipy.io
+import tqdm
 from torchid.module.LTI import LinearMimo
 
 
@@ -138,6 +139,7 @@ if __name__ == '__main__':
     LOSS = []
     start_time = time.time()
     for epoch in range(epochs):
+        #loop = tqdm.tqdm(train_dl)
         for u_torch, y_meas_torch in train_dl:
 
             # Empty old gradients

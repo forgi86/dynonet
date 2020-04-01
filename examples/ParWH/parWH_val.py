@@ -35,6 +35,23 @@ class StaticNonLin(nn.Module):
         return y_nl
 
 
+class StaticMimoNonLin(nn.Module):
+
+    def __init__(self):
+        super(StaticMimoNonLin, self).__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(2, 20),  # 2 states, 1 input
+            nn.ReLU(),
+            nn.Linear(20, 2)
+        )
+
+    def forward(self, u_lin):
+
+        y_nl = self.net(u_lin)  # Process blocks individually
+        return y_nl
+
+
 if __name__ == '__main__':
 
     model_filename = 'model_WH'
@@ -43,6 +60,7 @@ if __name__ == '__main__':
     n_amp = 5 #  number of different amplitudes
     n_real = 20  # number of random phase multisine realizations
     N_per_period = 16384  # number of samples per period
+    n_skip = 100
     P = 2  # number of periods
     seq_len = N_per_period * P  # data points per realization
 
@@ -78,22 +96,22 @@ if __name__ == '__main__':
     # First linear section
     in_channels_1 = 1
     out_channels_1 = 2
-    nb_1 = 3
-    na_1 = 3
+    nb_1 = 6
+    na_1 = 6
     y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
     u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
     G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
     G1.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G1.pkl")))
 
     # Non-linear section
-    F_nl = StaticNonLin()
+    F_nl = StaticMimoNonLin()
     F_nl.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_F_nl.pkl")))
 
     # Second linear section
     in_channels_2 = 2
     out_channels_2 = 1
-    nb_2 = 3
-    na_2 = 3
+    nb_2 = 6
+    na_2 = 6
     y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
     u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
     G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
@@ -117,7 +135,7 @@ if __name__ == '__main__':
     # In[Plot]
     fig, ax = plt.subplots(2, 1, sharex=True)
     ax[0].plot(t, y_meas, 'k', label="$y$")
-    ax[0].plot(t, y_hat, 'r', label="$y$")
+    ax[0].plot(t, y_hat, 'r', label="$\hat y$")
     ax[0].legend()
     ax[0].grid()
 
@@ -156,6 +174,7 @@ if __name__ == '__main__':
     mag_G2_2, phase_G2_2, omega_G2_2 = control.bode(G2_sys[0, 1])
 
 
+
     # In[Inspect linear model]
 
     fig, ax = plt.subplots(1, 2)
@@ -170,7 +189,7 @@ if __name__ == '__main__':
 
     # In[Metrics]
 
-    idx_test = range(0, N)
+    idx_test = range(n_skip, N)
 
     e_rms = 1000*util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])
     mae = 1000 * util.metrics.error_mae(y_meas[idx_test], y_hat[idx_test])

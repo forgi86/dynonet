@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 from torchid.module.LTI import LinearMimo
-
+from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import time
@@ -38,9 +38,26 @@ class StaticNonLin(nn.Module):
         return y_nl
 
 
+class StaticMimoNonLin(nn.Module):
+
+    def __init__(self):
+        super(StaticMimoNonLin, self).__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(2, 20),  # 2 states, 1 input
+            nn.ReLU(),
+            nn.Linear(20, 2)
+        )
+
+    def forward(self, u_lin):
+
+        y_nl = self.net(u_lin)  # Process blocks individually
+        return y_nl
+
+
 if __name__ == '__main__':
 
-    lr = 1e-3
+    lr = 1e-4
     epochs = 1000
     test_freq = 1 # print a msg every epoch
     batch_size = 16
@@ -50,6 +67,7 @@ if __name__ == '__main__':
     N_per_period = 16384  # number of samples per period
     P = 2  # number of periods
     seq_len = N_per_period * P  # data points per realization
+    n_skip = 100  # skip first n_skip points in loss evaluation
 
     # Column names in the dataset
     TAG_U = 'u'
@@ -73,7 +91,11 @@ if __name__ == '__main__':
             tag_y = 'y' + str(real_idx)
             df_data = df_X_lst[amp_idx][[tag_u, tag_y]]  #np.array()
             data_mat[amp_idx, real_idx, :, :] = np.array(df_data)
+
     data_mat = data_mat.astype(np.float32)
+
+    data_train = data_mat[:, :-1, :, :]
+    data_val = data_mat[:, [-1], :, :] # use
 
     #data_mat_torch = torch.tensor(data_mat)  # A, R, T, C
 
@@ -88,7 +110,7 @@ if __name__ == '__main__':
             """
             self.data = torch.tensor(data)
             self.n_amp, self.n_real, self.seq_len, self.n_channels = data.shape
-            self.len = n_amp * n_real
+            self.len = self.n_amp * self.n_real
             self._data = self.data.view(self.n_amp * self.n_real, self.seq_len, self.n_channels)
 
         def __len__(self):
@@ -98,8 +120,6 @@ if __name__ == '__main__':
             return self._data[idx, :, [0]], self._data[idx, :, [1]]
 
 
-    train_ds = ParallelWHDataset(data_mat)
-    train_dl = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
 
 #    u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)
 #    y_meas_torch = torch.tensor(y[None, :, None],  dtype=torch.float, requires_grad=False)
@@ -109,20 +129,20 @@ if __name__ == '__main__':
     # First linear section
     in_channels_1 = 1
     out_channels_1 = 2
-    nb_1 = 3
-    na_1 = 3
+    nb_1 = 6  # was 3 before...
+    na_1 = 6
     y0_1 = torch.zeros((batch_size, na_1), dtype=torch.float)
     u0_1 = torch.zeros((batch_size, nb_1), dtype=torch.float)
     G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
 
     # Non-linear section
-    F_nl = StaticNonLin()
+    F_nl = StaticMimoNonLin()
 
     # Second linear section
     in_channels_2 = 2
     out_channels_2 = 1
-    nb_2 = 3
-    na_2 = 3
+    nb_2 = 6
+    na_2 = 6
     y0_2 = torch.zeros((batch_size, na_2), dtype=torch.float)
     u0_2 = torch.zeros((batch_size, nb_2), dtype=torch.float)
     G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
@@ -137,6 +157,17 @@ if __name__ == '__main__':
         G2.b_coeff[:, :, 0] = 0.1
         G1.b_coeff[:, :, 1] = 0.1
 
+        #G1.a_coeff[0, 0, 0] = -0.9
+        #G1.a_coeff[1, 0, 0] = 0.9
+        #G1.b_coeff[:, :, 0] = 0.1
+        #G1.b_coeff[:, :, 1] = 0.1
+
+        #G2.a_coeff[0, 0, 0] = -0.9
+        #G2.a_coeff[0, 1, 0] = 0.9
+
+        #G2.b_coeff[:, :, 0] = 0.1
+        #G1.b_coeff[:, :, 1] = 0.1
+
     # In[Setup optimizer]
     optimizer = torch.optim.Adam([
         {'params': G1.parameters(),    'lr': lr},
@@ -144,10 +175,23 @@ if __name__ == '__main__':
         {'params': G2.parameters(), 'lr': lr},
     ], lr=lr)
 
+    # In[Setup data loaders]
+    train_ds = ParallelWHDataset(data_train)
+    train_dl = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+
+    val_ds = ParallelWHDataset(data_val)
+    valid_dl = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, shuffle=True)
+
     # In[Training loop]
     LOSS = []
     start_time = time.time()
     for epoch in range(epochs):
+        #loop = tqdm(train_dl)
+        G1.train()
+        F_nl.train()
+        G1.train()
+
+        loss_train = torch.tensor(0.0)
         for u_torch, y_meas_torch in train_dl:
 
             # Empty old gradients
@@ -161,9 +205,12 @@ if __name__ == '__main__':
             y_hat = y_lin_2
 
             # Compute fit loss
-            err_fit = y_meas_torch - y_hat
+            err_fit = y_meas_torch[..., n_skip:, :] - y_hat[..., n_skip:, :]
             loss_fit = torch.mean(err_fit**2)
             loss = loss_fit
+
+            with torch.no_grad():
+                loss_train += loss
 
             # Statistics
             LOSS.append(loss.item())
@@ -172,10 +219,38 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-        if epoch % test_freq == 0:
-            with torch.no_grad():
-                RMSE = torch.sqrt(loss)
-            print(f'Epoch {epoch} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.4f}')
+        loss_train = loss_train/len(train_ds)
+        #loop.set_description('Epoch {}/{}'.format(epoch + 1, epochs))
+        #loop.set_postfix(loss=loss.item(), mse=0.9)
+
+        #if epoch % test_freq == 0:
+        #    with torch.no_grad():
+        #        RMSE = 1000*torch.sqrt(loss)
+        #    print(f'Epoch {epoch} | Fit Loss {loss_fit:.6f} | RMSE:{RMSE:.2f} mV')
+
+
+        G1.eval()
+        F_nl.eval()
+        G2.eval()
+        with torch.no_grad():
+            loss_val = torch.tensor(0.0)
+            for u_torch, y_meas_torch in valid_dl:
+                # Simulate
+                y_lin_1 = G1(u_torch, y0_1, u0_1)
+                y_nl_1 = F_nl(y_lin_1)
+                y_lin_2 = G2(y_nl_1, y0_2, u0_2)
+
+                y_hat = y_lin_2
+
+                # Compute fit loss
+                err_val = y_meas_torch[..., n_skip:, :] - y_hat[..., n_skip:, :]
+                loss_val += torch.mean(err_val ** 2)
+            loss_val = loss_val/len(valid_dl)
+
+        print(f'Epoch {epoch} | Train Loss {loss_train:.6f} | Validation Loss {loss_val:.6f}')
+
+
+
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")  # 182 seconds
@@ -208,6 +283,7 @@ if __name__ == '__main__':
 
     plt.figure()
     plt.plot(LOSS)
+    plt.grid(True)
 
 
     # In[Metrics]
