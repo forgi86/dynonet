@@ -7,12 +7,20 @@
 % (2) Vrije Universiteit Brussel, Belgium.
 %
 
+%% Clean workspace 
+clear;
+clc;
+
 %% Time integration parameters.
 
 fs = 750;               % working sampling frequency.
 upsamp = 20;            % upsampling factor to ensure integration accuracy.
 fsint = fs*upsamp;      % integration sampling frequency.
 h = 1/fsint;            % integration time step.
+
+%% Dataset path
+filename = 'train.h5';
+data_folder = 'Test signals';
 
 %% Excitation signal design. 
 
@@ -63,3 +71,23 @@ u = downsample(u,upsamp);
 y = y(1:(P-1)*N);
 u = u(1:(P-1)*N,:);
 P = P-1;
+
+
+%% Prepare data %%
+N = length(y);
+
+u = transpose(u);
+%% Save results in an hdf file %%
+
+
+filepath = fullfile(data_folder, filename);
+h5create(filepath, '/multisine/u', size(u))
+h5write(filepath, '/multisine/u', u)
+
+h5create(filepath, '/multisine/y', size(y))
+h5write(filepath, '/multisine/y', y)
+
+h5create(filepath, '/multisine/fs', size(fs))
+h5write(filepath, '/multisine/fs', fs)
+
+h5disp(filepath)
