@@ -40,8 +40,8 @@ if __name__ == '__main__':
     # Settings
     add_noise = True
     lr = 1e-3
-    num_iter = 10000
-    test_freq = 1
+    num_iter = 40000
+    test_freq = 10
     n_fit = 100000
     n_batch = 1
     n_b = 3
@@ -56,7 +56,10 @@ if __name__ == '__main__':
     TAG_Y = 'y'
 
     # Load dataset
-    df_names = ['WH_CombinedZeroMultisineSinesweep', 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas', 'WH_ZeroMeas']
+    df_names = ["WH_TestDataset"]
+    #df_names = ['WH_CombinedZeroMultisineSinesweep', 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas', 'WH_ZeroMeas']
+    #df_names = ['WH_CombinedZeroMultisineSinesweep', 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas']#, 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas']#, 'WH_ZeroMeas']
+
 
     df_list = []
     for dataset_name in df_names:
@@ -141,22 +144,20 @@ if __name__ == '__main__':
 
         # Optimize
         loss.backward()
-
-        if itr == 100:
-            pass
         optimizer.step()
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
     # In[Save model]
-    if not os.path.exists("models"):
-        os.makedirs("models")
-    model_filename = "model_WH"
+    model_name = "model_WH_trainedOnTest"
+    model_folder = os.path.join("models", model_name)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
 
-    torch.save(G1.state_dict(), os.path.join("models", f"{model_filename}_G1.pkl"))
-    torch.save(F_nl.state_dict(), os.path.join("models", f"{model_filename}_F_nl.pkl"))
-    torch.save(G2.state_dict(), os.path.join("models", f"{model_filename}_G2.pkl"))
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
+    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pkl"))
+    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
 
     # In[To numpy]
 
