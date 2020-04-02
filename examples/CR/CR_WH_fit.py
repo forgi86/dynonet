@@ -5,7 +5,7 @@ import torch.nn as nn
 import time
 import matplotlib.pyplot as plt
 import scipy.io
-from examples.CR_example.common import CRSmallDataset, StaticNonLin, StaticMimoNonLin
+from examples.CR.common import CRSmallDataset, StaticNonLin, StaticMimoNonLin
 from torchid.module.LTI import LinearMimo
 
 

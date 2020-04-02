@@ -30,11 +30,11 @@ class StaticNonLin(nn.Module):
         return y_nl
 
 
-
 if __name__ == '__main__':
 
-    # Set seed for reproducibility
-    model_filename = 'model_WH'
+    #model_name = "model_WH_trainedOnTest"
+    dataset_name = "WH_TestDataset.csv"
+    #dataset_name = 'WH_CombinedZeroMultisineSinesweep.csv'  # test on train!
 
     # Settings
     n_b = 3
@@ -48,8 +48,11 @@ if __name__ == '__main__':
     TAG_U = 'u'
     TAG_Y = 'y'
 
+    COL_U = 'u0'
+    COL_Y = 'y0'
+
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "WH_TestDataset.csv"))
+    df_X = pd.read_csv(os.path.join("data", dataset_name))
     idx_u = list(df_X.keys()).index('u')
     n_real = idx_u
     col_names = [TAG_R + str(i) for i in range(n_real)] \
@@ -58,8 +61,8 @@ if __name__ == '__main__':
     df_X.columns = col_names
 
     # Extract data
-    y_meas = np.array(df_X[['y1']], dtype=np.float32)
-    u = np.array(df_X[['u1']], dtype=np.float32)
+    y_meas = np.array(df_X[[COL_Y]], dtype=np.float32)
+    u = np.array(df_X[[COL_U]], dtype=np.float32)
     fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32)
     N = y_meas.size
     ts = 1/fs
@@ -84,9 +87,11 @@ if __name__ == '__main__':
 
 
     # Create model parameters
-    G1.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G1.pkl")))
-    F_nl.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_F_nl.pkl")))
-    G2.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G2.pkl")))
+    model_name = "model_WH_trainedOnTest"
+    model_folder = os.path.join("models", model_name)
+    G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
+    G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
 
     # In[Predict]
 
