@@ -22,7 +22,7 @@ if __name__ == '__main__':
     lr_BFGS = 1e-1
     num_iter_ADAM = 1000
     num_iter_BFGS = 100
-    test_freq = 100
+    msg_freq = 100
     n_fit = 100000
     decimate = 1
     n_batch = 1
@@ -100,14 +100,14 @@ if __name__ == '__main__':
     for itr in range(0, num_iter):
 
         if itr < num_iter_ADAM:
-            test_freq = 10
+            msg_freq = 10
             loss_train = optimizer_ADAM.step(closure)
         else:
-            test_freq = 10
+            msg_freq = 10
             loss_train = optimizer_LBFGS.step(closure)
 
         LOSS.append(loss_train.item())
-        if itr % test_freq == 0:
+        if itr % msg_freq == 0:
             with torch.no_grad():
                 RMSE = torch.sqrt(loss_train)
             print(f'Iter {itr} | Fit Loss {loss_train:.6f} | RMSE:{RMSE:.4f}')

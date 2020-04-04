@@ -23,7 +23,7 @@ if __name__ == '__main__':
     n_a = 4
     n_fit = 100000
     n_batch = 1
-    lr = 5e-3
+    lr = 2e-3
     num_iter = 80000
     msg_freq = 100
 
@@ -154,4 +154,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     ax.plot(LOSS)
     plt.grid(True)
+
+
+
 
