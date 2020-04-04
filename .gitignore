@@ -1,3 +1,10 @@
 /examples/CR/data/
 /examples/CR/models/
 /examples/BW/models/
+/examples/coupled_drive/data/
+/examples/ParWH/data/
+/examples/ParWH/models/model_PWH/
+/examples/Silverbox/data/
+/examples/WH2009/data/
+/examples/WH2016/data/
+/torchid/old/
