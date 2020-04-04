@@ -3,42 +3,21 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.LTI import LinearMimo
+from torchid.module.static import StaticMimoNonLin
 import matplotlib.pyplot as plt
 import time
-import torch.nn as nn
-
 import util.metrics
 
 
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-        #for m in self.net.modules():
-        #    if isinstance(m, nn.Linear):
-        #        nn.init.normal_(m.weight, mean=0, std=1e-3)
-        #        nn.init.constant_(m.bias, val=0)
-
-    def forward(self, y_lin):
-        y_nl = self.net(y_lin)
-        return y_nl
 
 
 if __name__ == '__main__':
 
-    # Set seed for reproducibility
+    # In[Set seed for reproducibility]
     np.random.seed(0)
     torch.manual_seed(0)
 
-    # Settings
-    add_noise = True
+    # In[Settings]
     lr = 1e-3
     num_iter = 40000
     test_freq = 10
@@ -49,13 +28,13 @@ if __name__ == '__main__':
     n_u = 1
     n_y = 1
 
-    # Column names in the dataset
+    # In[Column names in dataset]
     COL_F = 'fs'
     TAG_R = 'r'
     TAG_U = 'u'
     TAG_Y = 'y'
 
-    # Load dataset
+    # In[Load all datasets]
     df_names = ["WH_TestDataset"]
     #df_names = ['WH_CombinedZeroMultisineSinesweep', 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas', 'WH_ZeroMeas']
     #df_names = ['WH_CombinedZeroMultisineSinesweep', 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas']#, 'WH_MultisineFadeOut', 'WH_SineInput_meas', 'WH_Triangle2_meas']#, 'WH_ZeroMeas']
@@ -91,8 +70,7 @@ if __name__ == '__main__':
 #    df_X = pd.read_csv(os.path.join("data", "WH_CombinedZeroMultisineSinesweep.csv"))
 
 
-
-    # Second-order dynamical system custom defined
+    # In[Setup model]
     G1 = LinearMimo(1, 1, n_b, n_a)
     G2 = LinearMimo(1, 1, n_b, n_a)
 
@@ -105,9 +83,9 @@ if __name__ == '__main__':
         G2.b_coeff[:] = torch.randn((1, 1, n_a))*0.01
 
     # Static sandwitched non-linearity
-    F_nl = StaticNonLin()
+    F_nl = StaticMimoNonLin(in_channels=1, out_channels=1)
 
-    # Setup optimizer
+    # In[Setup optimizer]
     optimizer = torch.optim.Adam([
         {'params': G1.parameters(), 'lr': lr},
         {'params': G2.parameters(), 'lr': lr},

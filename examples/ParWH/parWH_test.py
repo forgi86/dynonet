@@ -13,7 +13,8 @@ from examples.ParWH.common import StaticMimoNonLin
 
 if __name__ == '__main__':
 
-    model_filename = 'model_WH'
+    model_name = "model_PWH"
+
     n_batch = 1
 
     n_amp = 5 #  number of different amplitudes
@@ -52,6 +53,8 @@ if __name__ == '__main__':
 
     # In[Set-up model]
 
+    model_folder = os.path.join("models", model_name)
+
     # First linear section
     in_channels_1 = 1
     out_channels_1 = 2
@@ -60,11 +63,11 @@ if __name__ == '__main__':
     y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
     u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
     G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
-    G1.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G1.pkl")))
+    G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
 
     # Non-linear section
     F_nl = StaticMimoNonLin()
-    F_nl.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_F_nl.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
 
     # Second linear section
     in_channels_2 = 2
@@ -74,7 +77,7 @@ if __name__ == '__main__':
     y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
     u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
     G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
-    G2.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G2.pkl")))
+    G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
 
     # In[Predict]
     u_torch = torch.tensor(u[None, :, None],  dtype=torch.float, requires_grad=False)

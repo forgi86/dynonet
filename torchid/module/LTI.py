@@ -10,6 +10,7 @@ class LinearMimo(torch.nn.Module):
     Args:
         b_coeff (np.array): Learnable coefficients of the transfer function numerator
         a_coeff (np.array): Learnable coefficients of the transfer function denominator
+        n_k (int): Number of input delays
 
     Shape:
         - Input: :math:`(B, T)`
@@ -33,12 +34,22 @@ class LinearMimo(torch.nn.Module):
         >>> G = LinearSiso(b_coeff, a_coeff)
         >>> y_out = G(u_in, y_0, u_0)
     """
-    def __init__(self, in_channels, out_channels, n_b, n_a):
+
+    def __init__(self, in_channels, out_channels, n_b, n_a, n_k=0):
         super(LinearMimo, self).__init__()
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, n_b))
         self.a_coeff = Parameter(torch.zeros(out_channels, in_channels, n_a))
+        self.n_k = n_k
+
+        with torch.no_grad():
+            self.a_coeff[:] = torch.randn(self.a_coeff.shape) * 0.1
+            self.b_coeff[:] = torch.randn(self.b_coeff.shape) * 0.1
 
     def forward(self, u_in, y_0=None, u_0=None):
-        return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_in, y_0, u_0)
-
+        if self.n_k != 0:
+            u_d = u_in.roll(self.n_k, dims=-2)  # roll on the time axis
+            u_d[..., 0:self.n_k, :] = 0.0  # input sequence with delay
+        else:
+            u_d = u_in
+        return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_d, y_0, u_0)
 

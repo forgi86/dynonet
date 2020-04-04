@@ -199,13 +199,14 @@ if __name__ == '__main__':
 
 
     # In[Save model]
-    if not os.path.exists("models"):
-        os.makedirs("models")
-    model_filename = "model_WH"
+    model_name = "model_PWH"
+    model_folder = os.path.join("models", model_name)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
 
-    torch.save(G1.state_dict(), os.path.join("models", f"{model_filename}_G1.pkl"))
-    torch.save(F_nl.state_dict(), os.path.join("models", f"{model_filename}_F_nl.pkl"))
-    torch.save(G2.state_dict(), os.path.join("models", f"{model_filename}_G2.pkl"))
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
+    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pkl"))
+    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
 
 
     # In[detach]

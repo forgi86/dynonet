@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.functional.linearsiso import LinearDynamicalSystem
+from torchid.module.LTI import LinearMimo
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     decimate = 1
     n_batch = 1
     n_b = 3
-    n_f = 3
+    n_a = 3
 
     # Column names in the dataset
     COL_F = ['fs']
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     df_X = pd.read_csv(os.path.join("data", "WienerHammerBenchmark.csv"))
 
     # Extract data
-    y = np.array(df_X[COL_Y], dtype=np.float32)
-    u = np.array(df_X[COL_U], dtype=np.float32)
+    y = np.array(df_X[COL_Y], dtype=np.float32)[None, :]  # batch, time, channel
+    u = np.array(df_X[COL_U], dtype=np.float32)[None, :]
     fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32)
     N = y.size
     ts = 1/fs
@@ -71,23 +71,20 @@ if __name__ == '__main__':
 
 
     # Prepare data
-    u_fit_torch = torch.tensor(u_fit.reshape(1, -1), dtype=torch.float, requires_grad=False)
-    y_fit_torch = torch.tensor(y_fit.reshape(1, -1), dtype=torch.float)
+    u_fit_torch = torch.tensor(u_fit, dtype=torch.float, requires_grad=False)
+    y_fit_torch = torch.tensor(y_fit, dtype=torch.float)
 
 
     # Second-order dynamical system custom defined
-    b1_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
-    f1_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
-    G1 = LinearDynamicalSystem(b1_coeff, f1_coeff)
-    y_init_1 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_init_1 = torch.zeros((n_batch, n_b), dtype=torch.float)
+    G1 = LinearMimo(1, 1, n_b, n_a)
+    G2 = LinearMimo(1, 1, n_b, n_a)
+    with torch.no_grad():
+        G1.a_coeff[:] = torch.randn((1, 1, n_a))*0.01
+        G1.b_coeff[:] = torch.randn((1, 1, n_b))*0.01
 
-    # Second-order dynamical system custom defined
-    b2_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
-    f2_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
-    G2 = LinearDynamicalSystem(b2_coeff, f2_coeff)
-    y_init_2 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_init_2 = torch.zeros((n_batch, n_b), dtype=torch.float)
+        G2.a_coeff[:] = torch.randn((1, 1, n_a))*0.01
+        G2.b_coeff[:] = torch.randn((1, 1, n_b))*0.01
+
 
     # Static sandwitched non-linearity
     F_nl = StaticNonLin()
@@ -107,9 +104,9 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y1_lin = G1(u_fit_torch, y_init_1, u_init_1)
+        y1_lin = G1(u_fit_torch)
         y1_nl = F_nl(y1_lin)
-        y_hat = G2(y1_nl, y_init_2, u_init_2)
+        y_hat = G2(y1_nl)
 
         # Compute fit loss
         err_fit = y_fit_torch - y_hat
@@ -124,28 +121,27 @@ if __name__ == '__main__':
 
         # Optimize
         loss.backward()
-
-        if itr == 100:
-            pass
         optimizer.step()
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}")  # 182 seconds
+    print(f"\nTrain time: {train_time:.2f}")
 
     # In[Save model]
-    if not os.path.exists("models"):
-        os.makedirs("models")
-    model_filename = "model_WH"
+    model_name = "model_WH"
+    model_folder = os.path.join("models", model_name)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
 
-    torch.save(G1.state_dict(), os.path.join("models", f"{model_filename}_G1.pkl"))
-    torch.save(F_nl.state_dict(), os.path.join("models", f"{model_filename}_F_nl.pkl"))
-    torch.save(G2.state_dict(), os.path.join("models", f"{model_filename}_G2.pkl"))
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
+    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pkl"))
+    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
+
 
     # In[To numpy]
 
-    y_hat = y_hat.detach().numpy()
-    y1_lin = y1_lin.detach().numpy()
-    y1_nl = y1_nl.detach().numpy()
+    y_hat = y_hat.detach().numpy()[0, :, 0]
+    y1_lin = y1_lin.detach().numpy()[0, :, 0]
+    y1_nl = y1_nl.detach().numpy()[0, :, 0]
 
     # In[Plot]
     plt.figure()
