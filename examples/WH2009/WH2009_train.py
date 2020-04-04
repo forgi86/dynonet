@@ -2,34 +2,13 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
+from torchid.module.LTI import LinearSiso
+from torchid.module.static import StaticSisoNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
 import util.metrics
-
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.Tanh(),
-            nn.Linear(20, 1)
-        )
-
-        #for m in self.net.modules():
-        #    if isinstance(m, nn.Linear):
-        #        nn.init.normal_(m.weight, mean=0, std=1e-1)
-        #        nn.init.constant_(m.bias, val=0)
-
-    def forward(self, y_lin):
-        #y_nl = -nn.ReLU()(-y_lin) + self.net(y_lin)
-        y_nl = self.net(y_lin)
-        return y_nl
 
 
 if __name__ == '__main__':
@@ -76,18 +55,11 @@ if __name__ == '__main__':
 
 
     # Second-order dynamical system custom defined
-    G1 = LinearMimo(1, 1, n_b, n_a)
-    G2 = LinearMimo(1, 1, n_b, n_a)
-    with torch.no_grad():
-        G1.a_coeff[:] = torch.randn((1, 1, n_a))*0.01
-        G1.b_coeff[:] = torch.randn((1, 1, n_b))*0.01
-
-        G2.a_coeff[:] = torch.randn((1, 1, n_a))*0.01
-        G2.b_coeff[:] = torch.randn((1, 1, n_b))*0.01
-
+    G1 = LinearSiso(n_b, n_a)
+    G2 = LinearSiso(n_b, n_a)
 
     # Static sandwitched non-linearity
-    F_nl = StaticNonLin()
+    F_nl = StaticSisoNonLin()
 
     # Setup optimizer
     optimizer = torch.optim.Adam([
@@ -174,9 +146,3 @@ if __name__ == '__main__':
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
     print(f"RMSE: {e_rms:.2f}")
-
-
-
-
-
-

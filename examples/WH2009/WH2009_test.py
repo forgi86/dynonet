@@ -2,41 +2,19 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.old.linearsiso_TB import LinearDynamicalSystem
+from torchid.module.LTI import LinearSiso
+from torchid.module.static import StaticSisoNonLin
+
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import control
 import util.metrics
 
 
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.Tanh(),
-            nn.Linear(20, 1)
-        )
-
-        #for m in self.net.modules():
-        #    if isinstance(m, nn.Linear):
-        #        nn.init.normal_(m.weight, mean=0, std=1e-1)
-        #        nn.init.constant_(m.bias, val=0)
-
-    def forward(self, y_lin):
-        #y_nl = -nn.ReLU()(-y_lin) + self.net(y_lin)
-        y_nl = self.net(y_lin)
-        return y_nl
-
-
-
-
 if __name__ == '__main__':
 
     # Set seed for reproducibility
-    model_filename = 'model_WH'
+    model_name = 'model_WH_LBFGS'
 
     # Settings
     n_b = 3
@@ -67,37 +45,29 @@ if __name__ == '__main__':
     t_skip = 1000
 
     # In[Instantiate models]
-    y_init_1 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_init_1 = torch.zeros((n_batch, n_b), dtype=torch.float)
-    b1_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
-    f1_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
-
-    y_init_2 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_init_2 = torch.zeros((n_batch, n_b), dtype=torch.float)
-    b2_coeff = np.array([0.1, 0.0, 0.0], dtype=np.float32)
-    f2_coeff = np.array([-0.9, 0.0, 0.0], dtype=np.float32)
 
     # Create models
-    G1 = LinearDynamicalSystem(b1_coeff, f1_coeff)
-    G2 = LinearDynamicalSystem(b2_coeff, f2_coeff)
-    F_nl = StaticNonLin()
+    G1 = LinearSiso(n_b=3, n_a=3)
+    G2 = LinearSiso(n_b=3, n_a=3)
+    F_nl = StaticSisoNonLin()
 
+    model_folder = os.path.join("models", model_name)
     # Create model parameters
-    G1.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G1.pkl")))
-    F_nl.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_F_nl.pkl")))
-    G2.load_state_dict(torch.load(os.path.join("models", f"{model_filename}_G2.pkl")))
+    G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
+    G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
 
     # In[Predict]
 
-    u_torch = torch.tensor(u)
-    y1_lin = G1(u_torch, y_init_1, u_init_1)
+    u_torch = torch.tensor(u[None, :, :])
+    y1_lin = G1(u_torch)
     y1_nl = F_nl(y1_lin)
-    y_hat = G2(y1_nl, y_init_2, u_init_2)
+    y_hat = G2(y1_nl)
 
     # In[Detach]
-    y_hat = y_hat.detach().numpy()
-    y1_lin = y1_lin.detach().numpy()
-    y1_nl = y1_nl.detach().numpy()
+    y_hat = y_hat.detach().numpy()[0, :, :]
+    y1_lin = y1_lin.detach().numpy()[0, :, :]
+    y1_nl = y1_nl.detach().numpy()[0, :, :]
 
     # In[Plot]
     plt.figure()
@@ -107,11 +77,11 @@ if __name__ == '__main__':
 
     # In[Inspect linear model]
 
-    G1_sys = control.TransferFunction(G1.b_coeff.detach().numpy(), np.r_[1.0, G1.f_coeff.detach().numpy()], ts)
+    G1_sys = control.TransferFunction(G1.b_coeff[0, 0, :].detach().numpy(), np.r_[1.0, G1.a_coeff[0, 0, :].detach().numpy()], ts)
     plt.figure()
     mag_G1, phase_G1, omega_G1 = control.bode(G1_sys)
 
-    G2_sys = control.TransferFunction(G2.b_coeff.detach().numpy(), np.r_[1.0, G2.f_coeff.detach().numpy()], ts)
+    G2_sys = control.TransferFunction(G2.b_coeff[0, 0, :].detach().numpy(), np.r_[1.0, G2.a_coeff[0, 0, :].detach().numpy()], ts)
     plt.figure()
     mag_G2, phase_G2, omega_G2 = control.bode(G2_sys)
 

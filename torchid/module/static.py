@@ -19,6 +19,11 @@ class StaticMimoNonLin(nn.Module):
         return y_nl
 
 
+class StaticSisoNonLin(StaticMimoNonLin):
+    def __init__(self, n_hidden=20):
+        super(StaticSisoNonLin, self).__init__(in_channels=1, out_channels=1, n_hidden=n_hidden)
+
+
 class StaticChannelWiseNonLin(nn.Module):
 
     def __init__(self, channels, n_hidden=10):
@@ -36,7 +41,7 @@ class StaticChannelWiseNonLin(nn.Module):
     def forward(self, u_lin):
 
         y_nl = []
-        for channel_idx, u_channel in enumerate(u_lin.split(1, dim=-1)): # split over the last dimension (input channel)
+        for channel_idx, u_channel in enumerate(u_lin.split(1, dim=-1)):  # split over the last dimension (input channel)
             y_nl_channel = self.net[channel_idx](u_channel)  # Process blocks individually
             y_nl.append(y_nl_channel)
 
