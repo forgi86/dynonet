@@ -23,7 +23,7 @@ def r_squared(y_true, y_pred, time_axis=0):
     """
 
     SSE = np.sum((y_pred - y_true)**2, axis=time_axis)
-    y_mean = np.mean(y_true, axis=time_axis)
+    y_mean = np.mean(y_true, axis=time_axis, keepdims=True)
     SST = np.sum((y_true - y_mean)**2, axis=time_axis)
 
     return 1.0 - SSE/SST
