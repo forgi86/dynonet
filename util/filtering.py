@@ -2,6 +2,7 @@ import numpy as np
 import scipy as sp
 import scipy.signal
 import numba as nb
+from multiprocessing.pool import ThreadPool as Pool
 
 
 def lfiltic_vec(b, a, y, x=None):
@@ -113,6 +114,23 @@ def lfilter_mimo_components(b, a, u_in):
     for out_idx in range(out_ch):
         for in_idx in range(in_ch):
             y_comp_out[:, :, out_idx, in_idx] = scipy.signal.lfilter(b[out_idx, in_idx, :], a[out_idx, in_idx, :], u_in[:, :, in_idx], axis=-1)
+    return y_comp_out  # [B, T, O, I]
+
+
+def lfilter_mimo_components_parallel(b, a, u_in):
+    batch_size, seq_len, in_ch = u_in.shape
+    out_ch, _, _ = a.shape
+    T = u_in.shape[1]
+    p = Pool(10)
+
+    args_all = [(b[out_idx, in_idx, :], a[out_idx, in_idx], u_in[:, :, in_idx]) for out_idx in
+                range(out_ch) for in_idx in range(in_ch)]
+
+    def fun(args):
+        return scipy.signal.lfilter(*args)
+    res_lst = p.map(fun, args_all)
+    y_comp_out = np.stack(res_lst, axis=-1).reshape(batch_size, T, out_ch, in_ch)
+
     return y_comp_out  # [B, T, O, I]
 
 

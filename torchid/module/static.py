@@ -9,7 +9,7 @@ class StaticMimoNonLin(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(in_channels, n_hidden),  # 2 states, 1 input
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(n_hidden, out_channels)
         )
 

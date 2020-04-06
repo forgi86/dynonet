@@ -5,7 +5,8 @@ import torch
 import matplotlib.pyplot as plt
 import time
 from torchid.module.LTI import LinearMimo
-from examples.BW.common import StaticMimoNonLin
+from torchid.module.static import StaticMimoNonLin
+
 
 if __name__ == '__main__':
 
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     n_fit = 100000
     n_batch = 1
     lr = 2e-3
-    num_iter = 80000
+    num_iter = 200000
     msg_freq = 100
 
     # In[Load dataset]

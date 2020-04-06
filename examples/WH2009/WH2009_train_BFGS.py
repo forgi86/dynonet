@@ -19,8 +19,8 @@ if __name__ == '__main__':
 
     # In[Settings]
     lr_ADAM = 1e-3
-    lr_BFGS = 1e-1
-    num_iter_ADAM = 1000
+    lr_BFGS = 1e0
+    num_iter_ADAM = 10000
     num_iter_BFGS = 100
     msg_freq = 100
     n_fit = 100000

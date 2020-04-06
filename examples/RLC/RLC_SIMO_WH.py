@@ -3,27 +3,10 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.LTI import LinearMimo
+from torchid.module.static import StaticChannelWiseNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
-
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-    def forward(self, u_lin):
-        #u_lin = torch.transpose(u_lin, (-2), (-1))
-        y_nl = u_lin + self.net(u_lin)
-        #y_nl = torch.transpose(y_nl, (-2), (-1))
-        return y_nl
 
 
 if __name__ == '__main__':
@@ -34,20 +17,18 @@ if __name__ == '__main__':
 
     # Settings
     add_noise = True
-    lr = 1e-4
+    lr = 1e-3
     num_iter = 40000
     test_freq = 100
     n_batch = 1
-    in_channels = 1
-    out_channels = 1
     n_b = 2
     n_a = 2
 
     # Column names in the dataset
-    COL_T = 'time'
+    COL_T = ['time']
     COL_X = ['V_C', 'I_L']
-    COL_U = 'V_IN'
-    COL_Y = 'V_C'
+    COL_U = ['V_IN']
+    COL_Y = ['V_C']
 
     # Load dataset
     df_X = pd.read_csv(os.path.join("data", "RLC_data_id_nl.csv"))
@@ -62,26 +43,23 @@ if __name__ == '__main__':
     # Add measurement noise
     std_noise_V = add_noise * 0.1
     #y_nonoise = np.copy(1 + x[:, [0]] + x[:, [0]]**2)
-    y_nonoise = np.copy(1 + x[:, 0] ** 3)
+    y_nonoise = np.copy(x[:, [0, 1]]) #np.copy(1 + x[:, [0]] ** 3)
     y_noise = y_nonoise + np.random.randn(*y_nonoise.shape) * std_noise_V
 
-
     # Prepare data
-    u_torch = torch.tensor(u[None, :, None], dtype=torch.float, requires_grad=False) # B, C, T
-    y_meas_torch = torch.tensor(y_noise[None, :, None], dtype=torch.float)
-    y_true_torch = torch.tensor(y_nonoise[None, :, None], dtype=torch.float)
-    y_0 = torch.zeros((n_batch, n_a), dtype=torch.float)
-    u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
-
-
-    G = LinearMimo(in_channels, out_channels, n_b, n_a)
-    nn_static = StaticNonLin()
+    u_torch = torch.tensor(u[None, :, :], dtype=torch.float, requires_grad=False)
+    y_meas_torch = torch.tensor(y_noise[None, :, :], dtype=torch.float)
+    y_true_torch = torch.tensor(y_nonoise[None, :, :], dtype=torch.float)
+    G1 = LinearMimo(in_channels=1, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
+    nn_static = StaticChannelWiseNonLin(channels=2, n_hidden=10) #StaticChannelWiseNonLin(in_channels=2, out_channels=2, n_hidden=10)
+    G2 = LinearMimo(in_channels=2, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
 
     # Setup optimizer
-    params_lin = G.parameters()
+
     optimizer = torch.optim.Adam([
-        {'params': params_lin,    'lr': lr},
-        {'params': nn_static.parameters(), 'lr': lr}
+        {'params': G1.parameters(),    'lr': lr},
+        {'params': nn_static.parameters(), 'lr': lr},
+        {'params': G2.parameters(), 'lr': lr},
     ], lr=lr)
 
 
@@ -93,9 +71,10 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y_lin = G(u_torch)#, y_0, u_0)
-        y_hat = nn_static(y_lin)
-        y_hat = y_hat
+        y_lin = G1(u_torch)
+        y_nl = nn_static(y_lin)
+        #y_hat = G2(y_nl)
+        y_hat = y_nl
 
         # Compute fit loss
         err_fit = y_meas_torch - y_hat
@@ -113,20 +92,24 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
+    # In[Detach]
+    y_hat = y_hat.detach().numpy()[0, :, :]
+
     # In[Plot]
-    plt.figure()
-    plt.plot(t, y_nonoise, 'k', label="$y$")
-    plt.plot(t, y_noise, 'r', label="$y_{noise}$")
-    plt.plot(t, y_hat.detach().numpy()[0, 0], 'b', label="$\hat y$")
-    plt.legend()
+    fig, ax = plt.subplots(2, 1)
+    ax[0].plot(t, y_nonoise[:, 0], 'k', label="$y$")
+    ax[0].plot(t, y_noise[:, 0], 'r', label="$y_{noise}$")
+    ax[0].plot(t, y_hat[:, 0], 'b', label="$\hat y$")
+    ax[0].legend()
+    ax[0].grid()
+
+    ax[1].plot(t, y_nonoise[:, 1], 'k', label="$y$")
+    ax[1].plot(t, y_noise[:, 1], 'r', label="$y_{noise}$")
+    ax[1].plot(t, y_hat[:, 1], 'b', label="$\hat y$")
+    ax[1].legend()
+    ax[1].grid()
 
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
 
-    # In[Plot]
-    plt.figure()
-    plt.plot(y_lin.detach(), y_hat.detach())
-
-    plt.figure()
-    plt.plot(x[:, [0]], y_nonoise)

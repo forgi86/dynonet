@@ -15,8 +15,9 @@ if __name__ == '__main__':
     # In[Settings]
     #h5_filename = 'train.h5'
     h5_filename = 'test.h5'
+    signal_name = 'multisine'
     #signal_name = 'multisine'
-    signal_name = 'sinesweep' # available in test
+    #signal_name = 'sinesweep' # available in test
     model_name = "model_BW_PWH_LBFGS"
 
     n_b = 4

@@ -87,7 +87,7 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
     COL = COL_T + COL_X + COL_U + COL_Y
     df_X = pd.DataFrame(X, columns=COL)
-    df_X.to_csv(os.path.join("data", "RLC_data_id.csv"), index=False)
+    df_X.to_csv(os.path.join("data", "RLC_data_id_lin.csv"), index=False)
 
 
     X = np.hstack((t_sim.reshape(-1, 1), x2, u.reshape(-1, 1), x2[:, 0].reshape(-1, 1)))
@@ -97,4 +97,4 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
     COL = COL_T + COL_X + COL_U + COL_Y
     df_X = pd.DataFrame(X, columns=COL)
-    #df_X.to_csv(os.path.join("data", "RLC_data_id.csv"), index=False)
+    df_X.to_csv(os.path.join("data", "RLC_data_id_nl.csv"), index=False)

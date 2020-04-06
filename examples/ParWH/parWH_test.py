@@ -6,14 +6,13 @@ import torch
 import torch.nn as nn
 import control
 from torchid.module.LTI import LinearMimo
+from torchid.module.static import StaticMimoNonLin
 import util.metrics
-from examples.ParWH.common import  ParallelWHDataset
-from examples.ParWH.common import StaticMimoNonLin
 
 
 if __name__ == '__main__':
 
-    model_name = "model_PWH"
+    model_name = "model_PWH_refined"
 
     n_batch = 1
 
@@ -41,7 +40,7 @@ if __name__ == '__main__':
         df_X_lst.append(df_Xi)
 
 
-    df_X = df_X_lst[5]
+    df_X = df_X_lst[4]
 
     # Extract data
     y_meas = np.array(df_X['y'], dtype=np.float32)
@@ -66,7 +65,7 @@ if __name__ == '__main__':
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
 
     # Non-linear section
-    F_nl = StaticMimoNonLin()
+    F_nl = StaticMimoNonLin(2, 2)
     F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
 
     # Second linear section

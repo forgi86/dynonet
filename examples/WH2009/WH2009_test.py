@@ -73,6 +73,7 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(t, y_meas, 'k', label="$y$")
     plt.plot(t, y_hat, 'b', label="$\hat y$")
+    plt.plot(t, y_meas - y_hat, 'r', label="$e$")
     plt.legend(loc='upper left')
 
     # In[Inspect linear model]
@@ -104,10 +105,10 @@ if __name__ == '__main__':
 
     # In[Metrics]
     idx_test = range(t_test_start + t_skip, t_test_end)
-    e_rms = util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
+    e_rms = 1000*util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
     fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
     r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 
-    print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
+    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
 
 

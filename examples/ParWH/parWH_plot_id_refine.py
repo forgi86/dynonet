@@ -13,8 +13,8 @@ import util.metrics
 
 if __name__ == '__main__':
 
-    lr = 1e-2
-    epochs = 1000
+    lr = 1e-3
+    epochs = 500
     test_freq = 1 # print a msg every epoch
     batch_size = 16
 
@@ -24,6 +24,9 @@ if __name__ == '__main__':
     P = 2  # number of periods
     seq_len = N_per_period * P  # data points per realization
     n_skip = 100  # skip first n_skip points in loss evaluation
+
+    model_load_name = "model_PWH"
+    model_save_name = "model_PWH_refined"
 
     # Column names in the dataset
     TAG_U = 'u'
@@ -72,6 +75,10 @@ if __name__ == '__main__':
     u0_2 = torch.zeros((batch_size, nb_2), dtype=torch.float)
     G2 = LinearMimo(2, 1, n_b=nb_2, n_a=na_2)
 
+    model_folder = os.path.join("models", model_load_name)
+    G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
+    G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
 
     # In[Setup optimizer]
     optimizer = torch.optim.Adam([
@@ -80,7 +87,7 @@ if __name__ == '__main__':
         {'params': G2.parameters(), 'lr': lr},
     ], lr=lr)
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=20, factor=0.1, min_lr=1e-4, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=20, factor=0.1, min_lr=1e-3, verbose=True)
 
     # In[Setup data loaders]
     train_ds = ParallelWHDataset(data_train)  # 19*5=95 samples
@@ -172,8 +179,7 @@ if __name__ == '__main__':
 
 
     # In[Save model]
-    model_name = "model_PWH"
-    model_folder = os.path.join("models", model_name)
+    model_folder = os.path.join("models", model_save_name )
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
 

@@ -2,26 +2,27 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.old.linearsiso import LinearDynamicalSystem
+from torchid.module.LTI import LinearSiso
+from torchid.module.static import StaticSisoNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
 
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        )
-
-    def forward(self, y_lin):
-        y_nonlin = y_lin + self.net(y_lin)
-        return y_nonlin
+# class StaticNonLin(nn.Module):
+#
+#     def __init__(self):
+#         super(StaticNonLin, self).__init__()
+#
+#         self.net = nn.Sequential(
+#             nn.Linear(1, 20),  # 2 states, 1 input
+#             nn.ReLU(),
+#             nn.Linear(20, 1)
+#         )
+#
+#     def forward(self, y_lin):
+#         y_nonlin = y_lin + self.net(y_lin)
+#         return y_nonlin
 
 
 if __name__ == '__main__':
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     test_freq = 100
     n_batch = 1
     n_b = 2
-    n_f = 2
+    n_a = 2
 
     # Column names in the dataset
     COL_T = ['time']
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "RLC_data_id.csv"))
+    df_X = pd.read_csv(os.path.join("data", "RLC_data_id_nl.csv"))
     t = np.array(df_X[COL_T], dtype=np.float32)
     #y = np.array(df_X[COL_Y], dtype=np.float32)
     x = np.array(df_X[COL_X], dtype=np.float32)
@@ -58,29 +59,15 @@ if __name__ == '__main__':
     # Add measurement noise
     std_noise_V = add_noise * 0.1
     #y_nonoise = np.copy(1 + x[:, [0]] + x[:, [0]]**2)
-    y_nonoise = np.copy(1 + x[:, [0]] ** 3)
+    y_nonoise = np.copy(x[:, [0, 1]]) #np.copy(1 + x[:, [0]] ** 3)
     y_noise = y_nonoise + np.random.randn(*y_nonoise.shape) * std_noise_V
 
-
     # Prepare data
-    u_torch = torch.tensor(u, dtype=torch.float, requires_grad=False)
-    y_meas_torch = torch.tensor(y_noise, dtype=torch.float)
-    y_true_torch = torch.tensor(y_nonoise, dtype=torch.float)
-    y_0 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
-    # coefficients of a 2nd order oscillator
-#    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-#    f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.float, requires_grad=True)  # f_1, f_2
-#    b_coeff = torch.tensor([0.0306464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-#    f_coeff = torch.tensor([-1.0, 0.9], dtype=torch.float, requires_grad=True)  # f_1, f_2
-#    b_coeff = torch.tensor([0.0, 0.0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-#    f_coeff = torch.tensor([-1.0, 0.0], dtype=torch.float, requires_grad=True)  # f_1, f_2
-
-    b_coeff = np.array([0.0, 0.0], dtype=np.float)
-    f_coeff = np.array([-1.0, 0.0], dtype=np.float)
-    # Second-order dynamical system custom defined
-    G = LinearDynamicalSystem(b_coeff, f_coeff)
-    nn_static = StaticNonLin()
+    u_torch = torch.tensor(u[None, :, :], dtype=torch.float, requires_grad=False)
+    y_meas_torch = torch.tensor(y_noise[None, :, :], dtype=torch.float)
+    y_true_torch = torch.tensor(y_nonoise[None, :, :], dtype=torch.float)
+    G = LinearSiso(n_b, n_a, n_k=1)
+    nn_static = StaticSisoNonLin()
 
     # Setup optimizer
     params_lin = G.parameters()
@@ -98,7 +85,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y_lin = G(u_torch, y_0, u_0)
+        y_lin = G(u_torch)
         y_hat = nn_static(y_lin)
 
         # Compute fit loss
