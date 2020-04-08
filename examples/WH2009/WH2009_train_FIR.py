@@ -2,12 +2,11 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearSiso
+from torchid.module.LTI import LinearSisoFir
 from torchid.module.static import StaticSisoNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
-
 
 import util.metrics
 
@@ -20,16 +19,15 @@ if __name__ == '__main__':
 
     # In[Settings]
     lr_ADAM = 1e-4
-    lr_BFGS = 1e0
-    num_iter_ADAM = 20000
-    num_iter_BFGS = 1000
-    msg_freq = 100
+    lr_BFGS = 1e-1
+    num_iter_ADAM = 100000
+    num_iter_BFGS = 0
+    test_freq = 100
     n_fit = 100000
     decimate = 1
     n_batch = 1
-    n_b = 3
-    n_a = 3
-    model_name = "model_WH_LBFGS"
+    n_b = 128
+    model_name = "model_WH_FIR"
 
     num_iter = num_iter_ADAM + num_iter_BFGS
 
@@ -60,9 +58,9 @@ if __name__ == '__main__':
     y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
 
     # In[Prepare model]
-    G1 = LinearSiso(n_b, n_a)
+    G1 = LinearSisoFir(n_b=n_b)
     F_nl = StaticSisoNonLin()
-    G2 = LinearSiso(n_b, n_a)
+    G2 = LinearSisoFir(n_b=n_b)
 
     def model(u_in):
         y1_lin = G1(u_fit_torch)
@@ -101,14 +99,14 @@ if __name__ == '__main__':
     for itr in range(0, num_iter):
 
         if itr < num_iter_ADAM:
-            msg_freq = 10
+            test_freq = 10
             loss_train = optimizer_ADAM.step(closure)
         else:
-            msg_freq = 10
+            test_freq = 10
             loss_train = optimizer_LBFGS.step(closure)
 
         LOSS.append(loss_train.item())
-        if itr % msg_freq == 0:
+        if itr % test_freq == 0:
             with torch.no_grad():
                 RMSE = torch.sqrt(loss_train)
             print(f'Iter {itr} | Fit Loss {loss_train:.6f} | RMSE:{RMSE:.4f}')
@@ -166,10 +164,4 @@ if __name__ == '__main__':
 
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
-    print(f"RMSE: {e_rms:.2f}") # target: 1mv
-
-
-
-
-
-
+    print(f"RMSE: {e_rms:.2f}")

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearSiso
+from torchid.module.LTI import LinearSisoFir
 from torchid.module.static import StaticSisoNonLin
 
 import matplotlib.pyplot as plt
@@ -14,11 +14,10 @@ import util.metrics
 if __name__ == '__main__':
 
 #    model_name = 'model_WH_LBFGS'
-    model_name = 'model_WH'
+    model_name = 'model_WH_FIR'
 
     # Settings
-    n_b = 3
-    n_a = 3
+    n_b = 128
 
     # Column names in the dataset
     COL_F = ['fs']
@@ -45,8 +44,8 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Create models
-    G1 = LinearSiso(n_b=n_b, n_a=n_a)
-    G2 = LinearSiso(n_b=n_b, n_a=n_a)
+    G1 = LinearSisoFir(n_b=n_b)
+    G2 = LinearSisoFir(n_b=n_b)
     F_nl = StaticSisoNonLin()
 
     model_folder = os.path.join("models", model_name)
@@ -76,22 +75,28 @@ if __name__ == '__main__':
 
     # In[Inspect linear model]
 
-    G1_sys = control.TransferFunction(G1.b_coeff[0, 0, :].detach().numpy(), np.r_[1.0, G1.a_coeff[0, 0, :].detach().numpy()], ts)
+    G1_a = np.zeros(n_b)
+    G1_a[0] = 1.0
+    G1_b= G1.b_coeff[0, 0, :].detach().numpy()[::-1]
+    G1_sys = control.TransferFunction(G1_b, G1_a, ts)
+    plt.figure()
+    plt.plot(G1_b)
+    plt.figure()
+    mag_G1, phase_G1, omega_G1 = control.bode(G1_sys, omega_limits=[1e2, 1e5])
+    _, y_imp = control.impulse_response(G1_sys, np.arange(n_b)*ts)
 
-    n_imp = 128
-    t_imp, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
-    plt.figure()
-    plt.plot(t_imp, y_imp)
-    plt.figure()
-    mag_G1, phase_G1, omega_G1 = control.bode(G1_sys)
+    G2_a= G1_a
 
-    G2_sys = control.TransferFunction(G2.b_coeff[0, 0, :].detach().numpy(), np.r_[1.0, G2.a_coeff[0, 0, :].detach().numpy()], ts)
+    G2_b = G2.b_coeff[0, 0, :].detach().numpy()[::-1]
+    G2_sys = control.TransferFunction(G2_b, G2_a, ts)
     plt.figure()
-    mag_G2, phase_G2, omega_G2 = control.bode(G2_sys)
-    t_imp, y_imp = control.impulse_response(G2_sys, np.arange(n_imp) * ts)
+    plt.plot(G2_b)
     plt.figure()
-    plt.plot(t_imp, y_imp)
-# In[Inspect static non-linearity]
+    mag_G2, phase_G2, omega_G2 = control.bode(G2_sys, omega_limits=[1e2, 1e5])
+
+#mag_G2, phase_G2, omega_G2 = control.bode(G2_sys)
+
+    # In[Inspect static non-linearity]
 
     y1_lin_min = np.min(y1_lin)
     y1_lin_max = np.max(y1_lin)

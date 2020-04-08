@@ -2,68 +2,62 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.functional.linearsiso import LinearSisoFunction
+from torchid.module.LTI import LinearSisoFir
 import matplotlib.pyplot as plt
 import time
 
+
 if __name__ == '__main__':
 
-    # Set seed for reproducibility
+    # In[Set seed for reproducibility]
     np.random.seed(0)
     torch.manual_seed(0)
 
-    # Settings
-    add_noise = True
-    lr = 1e-3
-    num_iter = 3000
+    # In[Settings]
+    add_noise = False
+    lr = 1e-4
+    num_iter = 20000
     test_freq = 100
     n_batch = 1
-    n_b = 2
-    n_f = 2
+    n_b = 256  # number of FIR coefficients
 
-    # Column names in the dataset
+    # In[Column names in the dataset]
     COL_T = ['time']
     COL_X = ['V_C', 'I_L']
     COL_U = ['V_IN']
     COL_Y = ['V_C']
 
-    # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "RLC_data_id_nl.csv"))
+    # In[Load dataset]
+    df_X = pd.read_csv(os.path.join("data", "RLC_data_id_lin.csv"))
     t = np.array(df_X[COL_T], dtype=np.float32)
     y = np.array(df_X[COL_Y], dtype=np.float32)
     x = np.array(df_X[COL_X], dtype=np.float32)
     u = np.array(df_X[COL_U], dtype=np.float32)
 
-    # Add measurement noise
+    # In[Add measurement noise]
     std_noise_V = add_noise * 10.0
     std_noise_I = add_noise * 1.0
     std_noise = np.array([std_noise_V, std_noise_I])
     x_noise = np.copy(x) + np.random.randn(*x.shape) * std_noise
     x_noise = x_noise.astype(np.float32)
 
-    # Output
+    # In[Output]
     y_noise = np.copy(x_noise[:, [0]])
     y_nonoise = np.copy(x[:, [0]])
 
-    # Second-order dynamical system custom defined
-    G = LinearSisoFunction.apply
 
     # Prepare data
-    u_torch = torch.tensor(u, dtype=torch.float, requires_grad=False)
-    y_meas_torch = torch.tensor(y_noise, dtype=torch.float)
-    y_true_torch = torch.tensor(y_nonoise, dtype=torch.float)
-    y_0 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
-    # coefficients of a 2nd order oscillator
-#    b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-#    f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.float, requires_grad=True)  # f_1, f_2
-    b_coeff = torch.tensor([0.01, 0], dtype=torch.float, requires_grad=True)  # b_1, b_2
-    f_coeff = torch.tensor([-0.9, 0.0], dtype=torch.float, requires_grad=True)  # f_1, f_2
+    u_torch = torch.tensor(u[None, ...], dtype=torch.float, requires_grad=False)
+    y_meas_torch = torch.tensor(y_noise[None, ...], dtype=torch.float)
+    y_true_torch = torch.tensor(y_nonoise[None, ...], dtype=torch.float)
 
-    # Setup optimizer
-    params_net = [b_coeff, f_coeff]
+    # In[Second-order dynamical system custom defined]
+    G = LinearSisoFir(n_b)
+
+
+    # In[Setup optimizer]
     optimizer = torch.optim.Adam([
-        {'params': params_net,    'lr': lr},
+        {'params': G.parameters(),    'lr': lr},
     ], lr=lr)
 
     # In[Train]
@@ -74,7 +68,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y_hat = G(b_coeff, f_coeff, u_torch, y_0, u_0)
+        y_hat = G(u_torch)
 
         # Compute fit loss
         err_fit = y_meas_torch - y_hat
@@ -92,11 +86,14 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
+    # In[Detach and reshape]
+    y_hat = y_hat.detach().numpy()[0, ...]
+
     # In[Plot]
     plt.figure()
     plt.plot(t, y_nonoise, 'k', label="$y$")
     plt.plot(t, y_noise, 'r', label="$y_{noise}$")
-    plt.plot(t, y_hat.detach().numpy(), 'b', label="$\hat y$")
+    plt.plot(t, y_hat, 'b', label="$\hat y$")
     plt.legend()
 
     plt.figure()
@@ -104,3 +101,9 @@ if __name__ == '__main__':
     plt.grid(True)
 
 
+    # In[FIR coefficients]
+
+    g_pars = G.b_coeff[0, 0, :].detach().numpy()
+    g_pars = g_pars[::-1]
+    fig, ax = plt.subplots()
+    ax.plot(g_pars)

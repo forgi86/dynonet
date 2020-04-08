@@ -5,7 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 import time
 from torchid.module.LTI import LinearMimo
-from examples.BW.common import StaticMimoNonLin
+from torchid.module.static import StaticMimoNonLin
 
 if __name__ == '__main__':
 

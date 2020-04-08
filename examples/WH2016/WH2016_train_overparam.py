@@ -16,15 +16,13 @@ if __name__ == '__main__':
 
     # In[Settings]
     lr = 1e-3
-    num_iter = 40000
+    num_iter = 2000
     test_freq = 10
-    n_fit = 100000
     n_batch = 1
     n_b = 3
     n_a = 3
     n_u = 1
     n_y = 1
-    model_name = "model_WH"
 
     # In[Column names in dataset]
     COL_F = 'fs'
@@ -69,25 +67,31 @@ if __name__ == '__main__':
 
 
     # In[Setup model]
-    G1 = LinearMimo(1, 1, n_b, n_a)
-    G2 = LinearMimo(1, 1, n_b, n_a)
+    # Second-order dynamical system
+    G1 = LinearMimo(1, 4, n_b, n_a, n_k=0)
+    F1 = StaticMimoNonLin(4, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = LinearMimo(4, 2, n_b, n_a, n_k=0)
+    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
+    G3 = LinearMimo(1, 1, n_b, n_a, n_k=0)
 
-    with torch.no_grad():
 
-        G1.a_coeff[:] = torch.randn((1, 1, n_a))*0.01
-        G1.b_coeff[:] = torch.randn((1, 1, n_b))*0.01
+    def model(u_in):
+        y1_lin = G1(u_in)
+        y1_nl = F1(y1_lin)
+        y2_lin = G2(y1_nl)
+        y2_nl = F2(y2_lin)
+        y3_lin = G3(y2_nl)
 
-        G2.a_coeff[:] = torch.randn((1, 1, n_a))*0.01
-        G2.b_coeff[:] = torch.randn((1, 1, n_a))*0.01
-
-    # Static sandwitched non-linearity
-    F1 = StaticMimoNonLin(in_channels=1, out_channels=1)
+        y_hat = y3_lin
+        return y_hat, y1_nl, y1_lin
 
     # In[Setup optimizer]
     optimizer = torch.optim.Adam([
         {'params': G1.parameters(), 'lr': lr},
-        {'params': G2.parameters(), 'lr': lr},
         {'params': F1.parameters(), 'lr': lr},
+        {'params': G2.parameters(), 'lr': lr},
+        {'params': F2.parameters(), 'lr': lr},
+        {'params': G3.parameters(), 'lr': lr},
     ], lr=lr)
 
     # In[Train]
@@ -103,9 +107,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Simulate
-        y1_lin = G1(u_fit_torch)
-        y1_nl = F1(y1_lin)
-        y_hat = G2(y1_nl)
+        y_hat, y1_nl, y1_lin = model(u_fit_torch)
 
         # Compute fit loss
         err_fit = y_fit_torch - y_hat
@@ -126,6 +128,7 @@ if __name__ == '__main__':
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
     # In[Save model]
+    model_name = "model_WH_over"
     model_folder = os.path.join("models", model_name)
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
@@ -169,8 +172,8 @@ if __name__ == '__main__':
     plt.grid(True)
 
     # In[Plot]
-    e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
-    print(f"RMSE: {e_rms:.2f}")
+    #e_rms = util.metrics.error_rmse(y_hat, y_hat)[0]
+    #print(f"RMSE: {e_rms:.2f}")
 
 
 

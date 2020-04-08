@@ -98,8 +98,8 @@ if __name__ == '__main__':
     plt.grid(True)
 
     # In[Metrics]
-    e_rms = 1000*util.metrics.error_rmse(y, y_hat)[0]
+    e_rms = util.metrics.error_rmse(y, y_hat)[0]*scaler_y
     fit_idx = util.metrics.fit_index(y, y_hat)[0]
     r_sq = util.metrics.r_squared(y, y_hat)[0]
 
-    print(f"RMSE: {e_rms:.2f} mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
+    print(f"RMSE: {e_rms:.2E} mm\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")

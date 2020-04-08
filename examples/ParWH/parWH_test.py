@@ -40,7 +40,7 @@ if __name__ == '__main__':
         df_X_lst.append(df_Xi)
 
 
-    df_X = df_X_lst[4]
+    df_X = df_X_lst[0]
 
     # Extract data
     y_meas = np.array(df_X['y'], dtype=np.float32)

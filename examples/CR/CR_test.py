@@ -29,6 +29,9 @@ if __name__ == '__main__':
     u = mat_data['data'][0][0][0].astype(np.float32)    # input, normalized handle angle. Tensor structure: (B, R, N)
     y = mat_data['data'][0][0][1].astype(np.float32)    # output, ICA component with highest SNR (normalized)
 
+    u = u[[0], :, :]
+    y = y[[0], :, :]
+
     B = u.shape[0]  # number of participants (10)
     R = u.shape[1]  # number of realizations (7)
     T = u.shape[2]  # time index (256)
@@ -53,19 +56,19 @@ if __name__ == '__main__':
 
     # First linear model
     in_channels_1 = 1
-    out_channels_1 = 6
-    nb_1 = 3
-    na_1 = 3
+    out_channels_1 = 3
+    nb_1 = 2
+    na_1 = 2
     G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
 
     # Static non-linearity
-    F1 = StaticMimoNonLin(out_channels_1, 6)
+    F1 = StaticMimoNonLin(out_channels_1, 3)
 
     # Second linear model
-    in_channels_2 = 6
+    in_channels_2 = 3
     out_channels_2 = 1
-    nb_2 = 3
-    na_2 = 3
+    nb_2 = 2
+    na_2 = 2
     G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
 
     # Save initial parameters (if available)
@@ -93,9 +96,9 @@ if __name__ == '__main__':
 
     # In[Plot signals]
     fig, ax = plt.subplots(2, 1)
-    ax[0].plot(time_vec, y_test[1, 0, :])
-    ax[0].plot(time_vec, y_test_hat[1, 0, :])
-    ax[1].plot(time_vec, u_test[1, 0, :])
+    ax[0].plot(time_vec, y_test[0, 0, :])
+    ax[0].plot(time_vec, y_test_hat[0, 0, :])
+    ax[1].plot(time_vec, u_test[0, 0, :])
 
 
     # In[Metrics]
@@ -107,3 +110,8 @@ if __name__ == '__main__':
     r_sq_test = util.metrics.r_squared(y_test, y_test_hat, time_axis=-2)
 
 #    print(f"RMSE: {e_rms:.2f}mV\nMAE: {mae:.2f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}\nRMSU: {u_rms:.2f}mV")
+
+    # In[]
+    plt.figure()
+    plt.hist(r_sq_train.ravel(), facecolor='b')
+    plt.hist(r_sq_test.ravel(), facecolor='r')

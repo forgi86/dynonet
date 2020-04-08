@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
     #model_name = "model_WH_trainedOnTest"
     dataset_name = "WH_TestDataset.csv"
+    model_name = "model_WH"
     #dataset_name = 'WH_CombinedZeroMultisineSinesweep.csv'  # test on train!
 
     # Settings
@@ -87,10 +88,9 @@ if __name__ == '__main__':
 
 
     # Create model parameters
-    model_name = "model_WH_trainedOnTest"
     model_folder = os.path.join("models", model_name)
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
-    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F1.pkl")))
     G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
 
     # In[Predict]

@@ -18,9 +18,9 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     # In[Settings]
-    lr_ADAM = 1e-3
+    lr_ADAM = 1e-4
     lr_BFGS = 1e-1
-    num_iter_ADAM = 10000
+    num_iter_ADAM = 100000
     num_iter_BFGS = 0
     test_freq = 100
     n_fit = 100000
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     n_batch = 1
     n_b = 3
     n_a = 3
-    model_name = "model_WH_LBFGS"
+    model_name = "model_WH"
 
     num_iter = num_iter_ADAM + num_iter_BFGS
 
