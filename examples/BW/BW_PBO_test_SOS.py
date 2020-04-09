@@ -2,23 +2,23 @@ import os
 import h5py
 import numpy as np
 import torch
+import torch.nn as nn
 import matplotlib.pyplot as plt
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin, StaticChannelWiseNonLin
+import time
+from torchid.module.LTI import LinearSecondOrderMimo
 import util.metrics
+from torchid.module.static import StaticMimoNonLin
 
 
 if __name__ == '__main__':
 
     # In[Settings]
-    #h5_filename = 'train.h5'
-    h5_filename = 'test.h5'
+    h5_filename = 'train.h5'
+    #h5_filename = 'test.h5'
+    signal_name = 'multisine'
     #signal_name = 'multisine'
-    signal_name = 'sinesweep' # available in test
-    model_name = "model_BW_PWH_deep"
-
-    n_b = 3
-    n_a = 3
+    #signal_name = 'sinesweep' # available in test
+    model_name = "model_BW_PBO_SOS_LBFGS_refined"
 
 
     # In[Load dataset]
@@ -54,14 +54,12 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearMimo(1, 4, n_b, n_a)
-    F1 = StaticMimoNonLin(4, 4, n_hidden=10)
-    G2 = LinearMimo(4, 2, n_b, n_a)
-    F2 = StaticChannelWiseNonLin(2, n_hidden=10)
-    G3 = LinearMimo(2, 1, n_b, n_a)
+    G1 = LinearSecondOrderMimo(1, 8)
+    F1 = StaticMimoNonLin(8, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = LinearSecondOrderMimo(4, 2)
+    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
+    G3 = LinearSecondOrderMimo(1, 1)
 
-
-    # In[Load model parameters]
     model_folder = os.path.join("models", model_name)
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
     F1.load_state_dict(torch.load(os.path.join(model_folder, "F1.pkl")))
@@ -73,18 +71,22 @@ if __name__ == '__main__':
     u_torch = torch.tensor(u)
 
     # In[Predict]
-    y1_lin = G1(u_torch)
-    y1_nl = F1(y1_lin)
-    y2_lin = G2(y1_nl)
-    y2_nl = F2(y2_lin)
-    y3_lin = G3(y2_nl)
-    y_hat = y3_lin
+    def model(u_in):
+        y1_lin = G1(u_in)
+        y1_nl = F1(y1_lin)
+        y2_lin = G2(y1_nl)
+        y2_nl = F2(y2_lin)
+        y3_lin = G3(y2_nl)
+
+        y_hat = y3_lin
+        return y_hat, y1_nl, y1_lin
+
+    y_hat, y1_nl, y1_lin = model(u_torch)
 
     # In[Detach & organize]
     y_hat = y_hat.detach().numpy()[0, :, :]
     y1_lin = y1_lin.detach().numpy()[0, :, :]
     y1_nl = y1_nl.detach().numpy()[0, :, :]
-
     y = y[0, :, :]
     u = u[0, :, :]
 

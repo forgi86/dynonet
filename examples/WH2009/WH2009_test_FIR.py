@@ -5,6 +5,7 @@ import os
 from torchid.module.LTI import LinearSisoFir
 from torchid.module.static import StaticSisoNonLin
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import control
@@ -13,7 +14,9 @@ import util.metrics
 
 if __name__ == '__main__':
 
-#    model_name = 'model_WH_LBFGS'
+    mpl.rc('text', usetex=True)
+    mpl.rcParams['axes.grid'] = True
+
     model_name = 'model_WH_FIR'
 
     # Settings
@@ -75,24 +78,33 @@ if __name__ == '__main__':
 
     # In[Inspect linear model]
 
-    G1_a = np.zeros(n_b)
-    G1_a[0] = 1.0
-    G1_b= G1.b_coeff[0, 0, :].detach().numpy()[::-1]
-    G1_sys = control.TransferFunction(G1_b, G1_a, ts)
+    n_imp = n_b
+    G1_num, G1_den = G1.get_numden()
+    G1_sys = control.TransferFunction(G1_num, G1_den, ts)
     plt.figure()
-    plt.plot(G1_b)
+    plt.title("$G_1$ impulse response")
+    _, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
+#    plt.plot(G1_num)
+    plt.plot(y_imp)
+    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
     plt.figure()
     mag_G1, phase_G1, omega_G1 = control.bode(G1_sys, omega_limits=[1e2, 1e5])
-    _, y_imp = control.impulse_response(G1_sys, np.arange(n_b)*ts)
+    plt.suptitle("$G_1$ bode plot")
+    plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
 
-    G2_a= G1_a
 
-    G2_b = G2.b_coeff[0, 0, :].detach().numpy()[::-1]
-    G2_sys = control.TransferFunction(G2_b, G2_a, ts)
+    #G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
+    G2_num, G2_den = G2.get_numden()
+    G2_sys = control.TransferFunction(G2_num, G2_den, ts)
     plt.figure()
-    plt.plot(G2_b)
+    plt.title("$G_2$ impulse response")
+    _, y_imp = control.impulse_response(G2_sys, np.arange(n_imp) * ts)
+    plt.plot(y_imp)
+    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
     plt.figure()
     mag_G2, phase_G2, omega_G2 = control.bode(G2_sys, omega_limits=[1e2, 1e5])
+    plt.suptitle("$G_2$ bode plot")
+    plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
 
 #mag_G2, phase_G2, omega_G2 = control.bode(G2_sys)
 

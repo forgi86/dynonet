@@ -76,21 +76,32 @@ if __name__ == '__main__':
 
     # In[Inspect linear model]
 
-    G1_sys = control.TransferFunction(G1.b_coeff[0, 0, :].detach().numpy(), np.r_[1.0, G1.a_coeff[0, 0, :].detach().numpy()], ts)
-
     n_imp = 128
-    t_imp, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
+    G1_num, G1_den = G1.get_numden()
+    G1_sys = control.TransferFunction(G1_num, G1_den, ts)
     plt.figure()
-    plt.plot(t_imp, y_imp)
+    plt.title("$G_1$ impulse response")
+    _, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
+    #    plt.plot(G1_num)
+    plt.plot(y_imp)
+    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
     plt.figure()
-    mag_G1, phase_G1, omega_G1 = control.bode(G1_sys)
+    mag_G1, phase_G1, omega_G1 = control.bode(G1_sys, omega_limits=[1e2, 1e5])
+    plt.suptitle("$G_1$ bode plot")
+    plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
 
-    G2_sys = control.TransferFunction(G2.b_coeff[0, 0, :].detach().numpy(), np.r_[1.0, G2.a_coeff[0, 0, :].detach().numpy()], ts)
+    # G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
+    G2_num, G2_den = G2.get_numden()
+    G2_sys = control.TransferFunction(G2_num, G2_den, ts)
     plt.figure()
-    mag_G2, phase_G2, omega_G2 = control.bode(G2_sys)
-    t_imp, y_imp = control.impulse_response(G2_sys, np.arange(n_imp) * ts)
+    plt.title("$G_2$ impulse response")
+    _, y_imp = control.impulse_response(G2_sys, np.arange(n_imp) * ts)
+    plt.plot(y_imp)
+    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
     plt.figure()
-    plt.plot(t_imp, y_imp)
+    mag_G2, phase_G2, omega_G2 = control.bode(G2_sys, omega_limits=[1e2, 1e5])
+    plt.suptitle("$G_2$ bode plot")
+    plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
 # In[Inspect static non-linearity]
 
     y1_lin_min = np.min(y1_lin)

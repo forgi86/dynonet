@@ -40,6 +40,10 @@ class LinearMimo(torch.nn.Module):
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, n_b))
         self.a_coeff = Parameter(torch.zeros(out_channels, in_channels, n_a))
         self.n_k = n_k
+        self.out_channels = out_channels
+        self.in_channels = in_channels
+        self.n_a = n_a
+        self.n_b = n_b
 
         with torch.no_grad():
             self.a_coeff[:] = torch.randn(self.a_coeff.shape) * 0.1
@@ -52,6 +56,40 @@ class LinearMimo(torch.nn.Module):
         else:
             u_d = u_in
         return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_d, y_0, u_0)
+
+    def get_ba(self):
+        return self.__get_ba__()
+
+    def get_numden(self):
+        return self.__get_numden__()
+
+    def __get_ba__(self):
+        # returns the coefficients of the polynomials b and a as function of q^{-1}
+        b_coeff_np, a_coeff_np = self.__get_ba_coeff__()
+        b_seq = b_coeff_np
+        a_seq = np.empty_like(a_coeff_np, shape=(self.out_channels, self.in_channels, self.n_a + 1))
+        a_seq[:, :, 0] = 1
+        a_seq[:, :, 1:] = a_coeff_np[:, :, :]
+        return b_seq, a_seq
+
+    def __get_numden__(self):
+        b_seq, a_seq = self.__get_ba__()
+        M = self.n_b  # numerator coefficients
+        N = self.n_a + 1  # denominator coefficients
+        if M > N:
+            num = b_seq
+            den = np.c_[a_seq, np.zeros((self.out_channels, self.in_channels, M - N))]
+        elif N > M:
+            num = np.c_[b_seq, np.zeros((self.out_channels, self.in_channels, N - M))]
+            den = a_seq
+        else:  # N == M
+            num = b_seq
+            den = a_seq
+
+        return num, den
+
+    def __get_ba_coeff__(self):
+        return self.b_coeff.detach().numpy(), self.a_coeff.detach().numpy()
 
 # SISO is implemented as a sub-case of MIMO
 class LinearSiso(LinearMimo):
@@ -88,24 +126,30 @@ class LinearSiso(LinearMimo):
     def __init__(self, n_b, n_a, n_k=0):
         super(LinearSiso, self).__init__(1, 1, n_b=n_b, n_a=n_a, n_k=0)
 
-#    def __getattr__(self, item):
-#        if item == 'b_coeff':
-#            return self.b_coeff[0, 0, :]
+    def get_ba(self):
+        b_seq, a_seq = super(LinearSiso, self).__get_ba__()  # MIMO numden
+        return b_seq[0, 0, :], a_seq[0, 0, :]
 
-#        if item == 'a_coeff':
-#            return self.b_coeff[0, 0, :]
+    def get_numden(self):
+        num, den = super(LinearSiso, self).__get_numden__()  # MIMO numden
+        return num[0, 0, :], den[0, 0, :]
 
-#        return self.__getattribute__(item)
 
 class LinearMimoFir(torch.nn.Module):
     def __init__(self, in_channels, out_channels, n_b, channels_last=True):
         super(LinearMimoFir, self).__init__()
         self.G = torch.nn.Conv1d(in_channels, out_channels, kernel_size=n_b, bias=False, padding=n_b-1)
-        self.b_coeff = self.G.weight
+        #self.b_coeff = self.G.weight
+        self.n_a = 0
         self.n_b = n_b
+        self.out_channels = out_channels
+        self.in_channels = in_channels
         self.channels_last = channels_last
 
     def forward(self, u_in):
+        # PyTorch 1.4 does not have a channels_last option for Conv1d, which is more convenient
+        # in our block-oriented modeling framework.
+        # Then, let us transpose the last and second last channels manually before and after applying torch.nn.Conv1d
         if self.channels_last:
             u_torch = u_in.transpose(-2, -1)
 
@@ -115,6 +159,55 @@ class LinearMimoFir(torch.nn.Module):
         if self.channels_last:
             y_out = y_out.transpose(-2, -1)
         return y_out
+
+    def get_ba(self):
+        return self.__get_ba__()
+
+    def get_numden(self):
+        return self.__get_numden__()
+
+    def __get_ba__(self):
+        b_coeff, a_coeff = self.__get_ba_coeff__()
+        b_seq = b_coeff
+        a_seq = np.empty_like(a_coeff, shape=(self.out_channels, self.in_channels, self.n_a + 1))
+        a_seq[:, :, 0] = 1
+        a_seq[:, :, 1:] = a_coeff[:, :, :]
+        return b_seq, a_seq
+
+    def __get_numden__(self):
+        b_seq, a_seq = self.__get_ba__()
+        M = self.n_b  # numerator coefficients
+        N = self.n_a + 1  # denominator coefficients
+        if M > N:
+            num = b_seq
+            den = np.c_[a_seq, np.zeros((self.out_channels, self.in_channels, M - N))]
+        elif N > M:
+            num = np.c_[self.b_poly, np.zeros((self.out_channels, self.in_channels, N - M))]
+            den = a_seq
+        else:  # N == M
+            num = b_seq
+            den = a_seq
+
+        return num, den
+
+    def __get_ba_coeff__(self):
+        b_coeff_np = self.G.weight.detach().numpy()
+        b_coeff_np = b_coeff_np[:, :, ::-1]
+        a_coeff_np = np.zeros_like(b_coeff_np, shape=(self.out_channels, self.in_channels, 0))
+        return b_coeff_np, a_coeff_np
+
+
+class LinearSisoFir(LinearMimoFir):
+    def __init__(self, n_b, channels_last=True):
+        super(LinearSisoFir, self).__init__(1, 1, n_b, channels_last=channels_last)
+
+    def get_ba(self):
+        b_seq, a_seq = super(LinearSisoFir, self).__get_ba__() # call to MIMO ba
+        return b_seq[0, 0, :], a_seq[0, 0, :]
+
+    def get_numden(self):
+        num, den = super(LinearSisoFir, self).__get_numden__() # call to MIMO numden
+        return num[0, 0, :], den[0, 0, :]
 
 
 class LinearSecondOrderMimo(torch.nn.Module):
@@ -140,10 +233,3 @@ class LinearSecondOrderMimo(torch.nn.Module):
 class LinearSecondOrderSiso(torch.nn.Module):
     def __init__(self):
         super(LinearSecondOrderSiso, self).__init__(1, 1, 2, 2) # in_channels, out_channels, n_b, n_a
-
-
-
-
-class LinearSisoFir(LinearMimoFir):
-    def __init__(self, n_b, channels_last=True):
-        super(LinearSisoFir, self).__init__(1, 1, n_b, channels_last=channels_last)
