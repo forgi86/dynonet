@@ -6,19 +6,21 @@ from torchid.module.LTI import LinearSiso
 from torchid.module.static import StaticSisoNonLin
 
 import matplotlib.pyplot as plt
-import torch.nn as nn
 import control
 import util.metrics
 
 
+# In[Main]
 if __name__ == '__main__':
 
-#    model_name = 'model_WH_LBFGS'
+    # In[
+    #model_name = 'model_WH_LBFGS'
     model_name = 'model_WH'
 
     # Settings
     n_b = 3
     n_a = 3
+    n_k = 1
 
     # Column names in the dataset
     COL_F = ['fs']
@@ -40,13 +42,13 @@ if __name__ == '__main__':
     t_fit_end = 100000
     t_test_start = 100000
     t_test_end = 188000
-    t_skip = 1000
+    t_skip = 1000  # skip for statistics
 
     # In[Instantiate models]
 
     # Create models
-    G1 = LinearSiso(n_b=n_b, n_a=n_a)
-    G2 = LinearSiso(n_b=n_b, n_a=n_a)
+    G1 = LinearSiso(n_b=n_b, n_a=n_a, n_k=n_k)
+    G2 = LinearSiso(n_b=n_b, n_a=n_a, n_k=n_k)
     F_nl = StaticSisoNonLin()
 
     model_folder = os.path.join("models", model_name)
@@ -102,6 +104,7 @@ if __name__ == '__main__':
     mag_G2, phase_G2, omega_G2 = control.bode(G2_sys, omega_limits=[1e2, 1e5])
     plt.suptitle("$G_2$ bode plot")
     plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
+
 # In[Inspect static non-linearity]
 
     y1_lin_min = np.min(y1_lin)

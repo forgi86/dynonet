@@ -39,11 +39,11 @@ class LinearMimo(torch.nn.Module):
         super(LinearMimo, self).__init__()
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, n_b))
         self.a_coeff = Parameter(torch.zeros(out_channels, in_channels, n_a))
-        self.n_k = n_k
         self.out_channels = out_channels
         self.in_channels = in_channels
         self.n_a = n_a
         self.n_b = n_b
+        self.n_k = n_k
 
         with torch.no_grad():
             self.a_coeff[:] = torch.randn(self.a_coeff.shape) * 0.1
@@ -51,8 +51,11 @@ class LinearMimo(torch.nn.Module):
 
     def forward(self, u_in, y_0=None, u_0=None):
         if self.n_k != 0:
-            u_d = u_in.roll(self.n_k, dims=-2)  # roll on the time axis
-            u_d[..., 0:self.n_k, :] = 0.0  # input sequence with delay
+            #u_d = u_in.roll(self.n_k, dims=-2)  # roll on the time axis
+            #u_d[..., 0:self.n_k, :] = 0.0  # input sequence with delay
+            u_d = torch.empty_like(u_in)
+            u_d[..., self.n_k:, :] = u_in[:, :-self.n_k, :]
+            u_d[..., 0:self.n_k, :] = 0.0
         else:
             u_d = u_in
         return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_d, y_0, u_0)
@@ -66,7 +69,8 @@ class LinearMimo(torch.nn.Module):
     def __get_ba__(self):
         # returns the coefficients of the polynomials b and a as function of q^{-1}
         b_coeff_np, a_coeff_np = self.__get_ba_coeff__()
-        b_seq = b_coeff_np
+        b_seq = np.zeros_like(b_coeff_np, shape=(self.out_channels, self.in_channels, self.n_b + self.n_k))  #b_coeff_np
+        b_seq[:, :, self.n_k:] = b_coeff_np[:, :, :]
         a_seq = np.empty_like(a_coeff_np, shape=(self.out_channels, self.in_channels, self.n_a + 1))
         a_seq[:, :, 0] = 1
         a_seq[:, :, 1:] = a_coeff_np[:, :, :]
@@ -74,8 +78,8 @@ class LinearMimo(torch.nn.Module):
 
     def __get_numden__(self):
         b_seq, a_seq = self.__get_ba__()
-        M = self.n_b  # numerator coefficients
-        N = self.n_a + 1  # denominator coefficients
+        M = self.n_b + self.n_k  # number of numerator coefficients of the q^{-1} polynomial
+        N = self.n_a + 1  # number of denominator coefficients of the q^{-1} polynomial
         if M > N:
             num = b_seq
             den = np.c_[a_seq, np.zeros((self.out_channels, self.in_channels, M - N))]
@@ -90,6 +94,7 @@ class LinearMimo(torch.nn.Module):
 
     def __get_ba_coeff__(self):
         return self.b_coeff.detach().numpy(), self.a_coeff.detach().numpy()
+
 
 # SISO is implemented as a sub-case of MIMO
 class LinearSiso(LinearMimo):
@@ -124,7 +129,7 @@ class LinearSiso(LinearMimo):
     """
 
     def __init__(self, n_b, n_a, n_k=0):
-        super(LinearSiso, self).__init__(1, 1, n_b=n_b, n_a=n_a, n_k=0)
+        super(LinearSiso, self).__init__(1, 1, n_b=n_b, n_a=n_a, n_k=n_k)
 
     def get_ba(self):
         b_seq, a_seq = super(LinearSiso, self).__get_ba__()  # MIMO numden
