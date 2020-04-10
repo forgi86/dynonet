@@ -8,7 +8,7 @@ LTI blocks
    :members:
    :special-members:
    :member-order: bysource
-   :exclude-members: __init__
+   :exclude-members: __init__, forward
 
 ---------------
 Static blocks

@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # In[Inspect linear model]
 
     n_imp = 128
-    G1_num, G1_den = G1.get_numden()
+    G1_num, G1_den = G1.get_tfdata()
     G1_sys = control.TransferFunction(G1_num, G1_den, ts)
     plt.figure()
     plt.title("$G_1$ impulse response")
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
 
     # G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
-    G2_num, G2_den = G2.get_numden()
+    G2_num, G2_den = G2.get_tfdata()
     G2_sys = control.TransferFunction(G2_num, G2_den, ts)
     plt.figure()
     plt.title("$G_2$ impulse response")

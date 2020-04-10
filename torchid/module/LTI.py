@@ -57,13 +57,56 @@ class LinearMimo(torch.nn.Module):
             u_d = u_in
         return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_d, y_0, u_0)
 
-    def get_ba(self):
-        return self.__get_ba__()
+    def get_filtdata(self):
+        r"""Returns the numerator and denominator coefficients of the transfer function :math:`q^{-1}`-polynomials.
 
-    def get_numden(self):
-        return self.__get_numden__()
+        The polynomials are function of the variable :math:`q^{-1}`.
+        The polynomial coefficients b and a have length m and n, respectively and are sorted in descending power order.
 
-    def __get_ba__(self):
+        For a certain input channel :math:`i` and output channel :math:`o`, the  corresponding transfer
+        function :math:`G_{i\rightarrow o}(z)` is:
+
+        .. math::
+            G_{i\rightarrow o}(z) = q^{-n_k}\frac{b[o, i, 0] + b[o, i, 1]q^{-1} + \dots + b[o, i, n]q^{-m+1}}
+            {a[o, i, 0] + a[o, i, 1]q^{-1} + \dots + a[o, i, n]q^{-n+1}}
+
+        Returns:
+            np.array(in_channels, out_channels, m), np.array(in_channels, out_channels, n):
+                numerator :math:`\beta` and denominator :math:`\alpha` polynomial coefficients of the transfer function.
+
+
+        Example::
+
+            >>> num, den = G.get_tfdata()
+            >>> G_tf = control.TransferFunction(G2_num, G2_den, ts=1.0)
+        """
+        return self.__get_filtdata__()
+
+    def get_tfdata(self):
+        r"""Returns the numerator and denominator coefficients of the transfer function :math:`z`-polynomials.
+
+        The polynomials are function of the variable Z-transform variable :math:`z`.
+        The polynomial coefficients :math::`\beta` and :math:`\alpha` have equal length p and are sorted in descending power order.
+
+        For a certain input channel :math:`i` and output channel :math:`o`, the  corresponding transfer
+        function :math:`G_{i\rightarrow o}(z)` is:
+
+        .. math::
+            G_{i\rightarrow o}(z) = \frac{\beta[o, i, 0]z^{n-1} + \beta[o, i, 1]z^{n-1} + \dots + \beta[o, i, p]}{\alpha[o, i, 0]z^{n-1} + \alpha[o, i, 1]z^{n-2} + \dots + \alpha[o, i, p]}
+
+        Returns:
+            np.array(in_channels, out_channels, p), np.array(in_channels, out_channels, p):
+                numerator :math:`\beta` and denominator :math:`\alpha` polynomial coefficients of the transfer function.
+
+
+        Example::
+
+            >>> num, den = G.get_tfdata()
+            >>> G_tf = control.TransferFunction(G2_num, G2_den, ts=1.0)
+        """
+        return self.__get_tfdata__()
+
+    def __get_filtdata__(self):
         # returns the coefficients of the polynomials b and a as function of q^{-1}
         b_coeff_np, a_coeff_np = self.__get_ba_coeff__()
         b_seq = np.zeros_like(b_coeff_np, shape=(self.out_channels, self.in_channels, self.n_b + self.n_k))  #b_coeff_np
@@ -73,8 +116,8 @@ class LinearMimo(torch.nn.Module):
         a_seq[:, :, 1:] = a_coeff_np[:, :, :]
         return b_seq, a_seq
 
-    def __get_numden__(self):
-        b_seq, a_seq = self.__get_ba__()
+    def __get_tfdata__(self):
+        b_seq, a_seq = self.__get_filtdata__()
         M = self.n_b + self.n_k  # number of numerator coefficients of the q^{-1} polynomial
         N = self.n_a + 1  # number of denominator coefficients of the q^{-1} polynomial
         if M > N:
@@ -122,12 +165,12 @@ class LinearSiso(LinearMimo):
     def __init__(self, n_b, n_a, n_k=0):
         super(LinearSiso, self).__init__(1, 1, n_b=n_b, n_a=n_a, n_k=n_k)
 
-    def get_ba(self):
-        b_seq, a_seq = super(LinearSiso, self).__get_ba__()  # MIMO numden
+    def get_filtdata(self):
+        b_seq, a_seq = super(LinearSiso, self).__get_filtdata__()  # MIMO numden
         return b_seq[0, 0, :], a_seq[0, 0, :]
 
-    def get_numden(self):
-        num, den = super(LinearSiso, self).__get_numden__()  # MIMO numden
+    def get_tfdata(self):
+        num, den = super(LinearSiso, self).__get_tfdata__()  # MIMO numden
         return num[0, 0, :], den[0, 0, :]
 
 
@@ -180,13 +223,13 @@ class LinearMimoFir(torch.nn.Module):
             y_out = y_out.transpose(-2, -1)
         return y_out
 
-    def get_ba(self):
-        return self.__get_ba__()
+    def get_filtdata(self):
+        return self.__get_filtdata__()
 
-    def get_numden(self):
-        return self.__get_numden__()
+    def get_tfdata(self):
+        return self.__get_tfdata__()
 
-    def __get_ba__(self):
+    def __gets_filtdata__(self):
         b_coeff, a_coeff = self.__get_ba_coeff__()
         b_seq = b_coeff
         a_seq = np.empty_like(a_coeff, shape=(self.out_channels, self.in_channels, self.n_a + 1))
@@ -194,8 +237,8 @@ class LinearMimoFir(torch.nn.Module):
         a_seq[:, :, 1:] = a_coeff[:, :, :]
         return b_seq, a_seq
 
-    def __get_numden__(self):
-        b_seq, a_seq = self.__get_ba__()
+    def __get_tfdata__(self):
+        b_seq, a_seq = self.__get_filtdata__()
         M = self.n_b  # numerator coefficients
         N = self.n_a + 1  # denominator coefficients
         if M > N:
@@ -241,12 +284,12 @@ class LinearSisoFir(LinearMimoFir):
     def __init__(self, n_b, channels_last=True):
         super(LinearSisoFir, self).__init__(1, 1, n_b, channels_last=channels_last)
 
-    def get_ba(self):
-        b_seq, a_seq = super(LinearSisoFir, self).__get_ba__() # call to MIMO ba
+    def get_filtdata(self):
+        b_seq, a_seq = super(LinearSisoFir, self).__get_filtdata__() # call to MIMO ba
         return b_seq[0, 0, :], a_seq[0, 0, :]
 
-    def get_numden(self):
-        num, den = super(LinearSisoFir, self).__get_numden__() # call to MIMO numden
+    def get_tfdata(self):
+        num, den = super(LinearSisoFir, self).__get_tfdata__() # call to MIMO numden
         return num[0, 0, :], den[0, 0, :]
 
 
