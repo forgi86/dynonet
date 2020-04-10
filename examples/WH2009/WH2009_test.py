@@ -18,8 +18,8 @@ if __name__ == '__main__':
     model_name = 'model_WH'
 
     # Settings
-    n_b = 3
-    n_a = 3
+    n_b = 4
+    n_a = 4
     n_k = 1
 
     # Column names in the dataset

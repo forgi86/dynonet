@@ -38,3 +38,11 @@ if __name__ == '__main__':
     #plt.figure()
     plt.plot(y_out_np[0, :, 0], label='y')
     #plt.grid(True)
+
+    # In[Test doc]
+    in_channels, out_channels = 2, 4
+    n_b, n_a, n_k = 2, 2, 1
+    G = LinearMimo(in_channels, out_channels, n_b, n_a, n_k)
+    batch_size, seq_len = 32, 100
+    u_in = torch.ones((batch_size, seq_len, in_channels))
+    y_out = G(u_in, y_0, u_0)  # shape:

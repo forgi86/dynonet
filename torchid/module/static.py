@@ -3,6 +3,26 @@ import torch.nn as nn
 
 
 class StaticMimoNonLin(nn.Module):
+    r"""Applies a Static MIMO non-linearity.
+    The non-linearity is implemented as a feed-forward neural network.
+
+    Args:
+        in_channels (int): Number of input channels
+        out_channels (int): Number of output channels
+        n_hidden (int, optional): Number of nodes in the hidden layer. Default: 20
+
+    Shape:
+        - Input: (..., in_channels)
+        - Output: (..., out_channels)
+
+    Examples::
+
+        >>> in_channels, out_channels = 2, 4
+        >>> F = StaticMimoNonLin(in_channels, out_channels)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len, in_channels))
+        >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
+    """
 
     def __init__(self, in_channels, out_channels, n_hidden=20):
         super(StaticMimoNonLin, self).__init__()
@@ -14,18 +34,52 @@ class StaticMimoNonLin(nn.Module):
         )
 
     def forward(self, u_lin):
-
-        y_nl = self.net(u_lin)  # Process blocks individually
+        y_nl = self.net(u_lin)
         return y_nl
 
 
 class StaticSisoNonLin(StaticMimoNonLin):
+    r"""Applies a Static SISO non-linearity.
+    The non-linearity is implemented as a feed-forward neural network.
+
+    Args:
+        n_hidden (int, optional): Number of nodes in the hidden layer. Default: 20
+
+    Shape:
+        - Input: (..., in_channels)
+        - Output: (..., out_channels)
+
+    Examples::
+
+        >>> F = StaticSisoNonLin(n_hidden=20)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len, in_channels))
+        >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
+    """
     def __init__(self, n_hidden=20):
         super(StaticSisoNonLin, self).__init__(in_channels=1, out_channels=1, n_hidden=n_hidden)
 
 
 class StaticChannelWiseNonLin(nn.Module):
+    r"""Applies a Channel-wise non-linearity.
+    The non-linearity is implemented as a set of feed-forward neural networks (each one operating on a different channel).
 
+    Args:
+        channels (int): Number of both input and output channels
+        n_hidden (int, optional): Number of nodes in the hidden layer of each network. Default: 10
+
+    Shape:
+        - Input: (..., channels)
+        - Output: (..., channels)
+
+    Examples::
+
+        >>> channels = 4
+        >>> F = StaticMimoNonLin(channels)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len, channels))
+        >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, channels)
+    """
     def __init__(self, channels, n_hidden=10):
         super(StaticChannelWiseNonLin, self).__init__()
 

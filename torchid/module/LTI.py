@@ -8,31 +8,28 @@ class LinearMimo(torch.nn.Module):
     r"""Applies a Dynamical Linear MIMO system to an input signal.
 
     Args:
-        b_coeff (np.array): Learnable coefficients of the transfer function numerator
-        a_coeff (np.array): Learnable coefficients of the transfer function denominator
-        n_k (int): Number of input delays
+        in_channels (int): Number of input channels
+        out_channels (int): Number of output channels
+        n_b (int): Number of learnable coefficients of the transfer function numerator
+        n_a (int): Number of learnable coefficients of the transfer function denominator
+        n_k (int, optional): Number of input delays in the numerator. Default: 0
 
     Shape:
-        - Input: :math:`(B, T)`
-        - Output: :math:`(B, T)`
+        - Input: (batch_size, seq_len, in_channels)
+        - Output: (batch_size, seq_len, out_channels)
 
     Attributes:
-        b_coeff (Tensor): the learnable coefficients of the transfer function numerator
-        a_coeff (Tensor): the learnable coefficients of the transfer function denominator
+        b_coeff (Tensor): The learnable coefficients of the transfer function numerator
+        a_coeff (Tensor): The learnable coefficients of the transfer function denominator
 
     Examples::
 
-        >>> batch_size = 1
-        >>> n_b = 2
-        >>> n_f = 2
-        >>> seq_len = 100
-        >>> u_in = torch.ones((batch_size, seq_len))
-        >>> y_0 = torch.zeros((batch_size, n_f))
-        >>> u_0 = torch.zeros((batch_size, n_b))
-        >>> b_coeff = np.array([0, 0.0706464146944544])  # b_0, b_1
-        >>> a_coeff = np.array([-1.87212998940304, 0.942776404097492])  # f_1, f_2
-        >>> G = LinearSiso(b_coeff, a_coeff)
-        >>> y_out = G(u_in, y_0, u_0)
+        >>> in_channels, out_channels = 2, 4
+        >>> n_b, n_a, n_k = 2, 2, 1
+        >>> G = LinearMimo(in_channels, out_channels, n_b, n_a, n_k)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len, in_channels))
+        >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
 
     def __init__(self, in_channels, out_channels, n_b, n_a, n_k=0):
@@ -101,13 +98,13 @@ class LinearSiso(LinearMimo):
     r"""Applies a Dynamical Linear MIMO system to an input signal.
 
     Args:
-        b_coeff (np.array): Learnable coefficients of the transfer function numerator
-        a_coeff (np.array): Learnable coefficients of the transfer function denominator
-        n_k (int): Number of input delays
+        n_b (int): Number of learnable coefficients of the transfer function numerator
+        n_a (int): Number of learnable coefficients of the transfer function denominator
+        n_k (int, optional): Number of input delays in the numerator. Default: 0
 
     Shape:
-        - Input: :math:`(B, T)`
-        - Output: :math:`(B, T)`
+        - Input: (batch_size, seq_len, 1)
+        - Output: (batch_size, seq_len, 1)
 
     Attributes:
         b_coeff (Tensor): the learnable coefficients of the transfer function numerator
@@ -115,17 +112,11 @@ class LinearSiso(LinearMimo):
 
     Examples::
 
-        >>> batch_size = 1
-        >>> n_b = 2
-        >>> n_f = 2
-        >>> seq_len = 100
-        >>> u_in = torch.ones((batch_size, seq_len))
-        >>> y_0 = torch.zeros((batch_size, n_f))
-        >>> u_0 = torch.zeros((batch_size, n_b))
-        >>> b_coeff = np.array([0, 0.0706464146944544])  # b_0, b_1
-        >>> a_coeff = np.array([-1.87212998940304, 0.942776404097492])  # f_1, f_2
+        >>> n_b, n_a = 2, 2
         >>> G = LinearSiso(b_coeff, a_coeff)
-        >>> y_out = G(u_in, y_0, u_0)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len))
+        >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, 1)
     """
 
     def __init__(self, n_b, n_a, n_k=0):
@@ -141,6 +132,30 @@ class LinearSiso(LinearMimo):
 
 
 class LinearMimoFir(torch.nn.Module):
+    r"""Applies a Linear MIMO FIR filter to an input signal.
+
+    Args:
+        in_channels (int): Number of input channels
+        out_channels (int): Number of output channels
+        n_b (int): Number of learnable FIR coefficients
+
+    Shape:
+        - Input: (batch_size, seq_len, in_channels)
+        - Output: (batch_size, seq_len, out_channels)
+
+    Attributes:
+        G (torch.nn.Conv1d): The underlying Conv1D object used to implement the convolution
+
+    Examples::
+
+        >>> in_channels, out_channels = 2, 4
+        >>> n_b = 128
+        >>> G = LinearMimo(in_channels, out_channels, n_b)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len, in_channels))
+        >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
+    """
+
     def __init__(self, in_channels, out_channels, n_b, channels_last=True):
         super(LinearMimoFir, self).__init__()
         self.G = torch.nn.Conv1d(in_channels, out_channels, kernel_size=n_b, bias=False, padding=n_b-1)
@@ -203,6 +218,26 @@ class LinearMimoFir(torch.nn.Module):
 
 
 class LinearSisoFir(LinearMimoFir):
+    r"""Applies a Linear SISO FIR filter to an input signal.
+
+    Args:
+        n_b (int): Number of learnable FIR coefficients
+
+    Shape:
+        - Input: (batch_size, seq_len, 1)
+        - Output: (batch_size, seq_len, 1)
+
+    Attributes:
+        G (torch.nn.Conv1d): The underlying Conv1D object used to implement the convolution
+
+    Examples::
+
+        >>> n_b = 128
+        >>> G = LinearSisoFir(n_b)
+        >>> batch_size, seq_len = 32, 100
+        >>> u_in = torch.ones((batch_size, seq_len, 1))
+        >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, 1)
+    """
     def __init__(self, n_b, channels_last=True):
         super(LinearSisoFir, self).__init__(1, 1, n_b, channels_last=channels_last)
 
@@ -235,6 +270,6 @@ class LinearSecondOrderMimo(torch.nn.Module):
         return LinearMimoFunction.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
 
 
-class LinearSecondOrderSiso(torch.nn.Module):
+class LinearSecondOrderSiso(LinearSecondOrderMimo):
     def __init__(self):
         super(LinearSecondOrderSiso, self).__init__(1, 1, 2, 2) # in_channels, out_channels, n_b, n_a
