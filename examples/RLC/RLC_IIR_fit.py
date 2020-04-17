@@ -14,8 +14,9 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     # In[Settings]
+    model_name = 'IIR'
     add_noise = False
-    lr = 1e-3
+    lr = 1e-4
     num_iter = 20000
     test_freq = 100
     n_batch = 1
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
 
     # In[Load dataset]
-    df_X = pd.read_csv(os.path.join("data", "RLC_data_id_nl.csv"))
+    df_X = pd.read_csv(os.path.join("data", "RLC_data_id_lin.csv"))
     t = np.array(df_X[COL_T], dtype=np.float32)
     y = np.array(df_X[COL_Y], dtype=np.float32)
     x = np.array(df_X[COL_X], dtype=np.float32)
@@ -93,6 +94,12 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}") # 182 seconds
 
+    # In[Save model]
+
+    model_folder = os.path.join("models", model_name)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
+    torch.save(G.state_dict(), os.path.join(model_folder, "G.pkl"))
     # In[Detach and reshape]
     y_hat = y_hat.detach().numpy()[0, ...]
     # In[Plot]

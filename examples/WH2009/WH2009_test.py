@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # Extract data
     y_meas = np.array(df_X[COL_Y], dtype=np.float32)
     u = np.array(df_X[COL_U], dtype=np.float32)
-    fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32).item()
+    fs = np.array(df_X[COL_F].iloc[0], dtype=np.float32).item()
     N = y_meas.size
     ts = 1/fs
     t = np.arange(N)*ts

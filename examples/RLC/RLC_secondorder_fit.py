@@ -6,6 +6,7 @@ from torchid.old.linearsiso_TB import SecondOrderOscillator
 import matplotlib.pyplot as plt
 import time
 
+
 if __name__ == '__main__':
 
     # Set seed for reproducibility

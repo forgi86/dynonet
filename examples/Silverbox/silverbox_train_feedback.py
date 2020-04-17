@@ -2,94 +2,64 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.old.linearsiso_TB import LinearDynamicalSystem
 import matplotlib.pyplot as plt
 import time
-import torch.nn as nn
-
+from torchid.module.LTI import LinearSiso
+from torchid.module.static import StaticSisoNonLin
 import util.metrics
-
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.Tanh(),
-            nn.Linear(20, 1)
-        )
-
-        for m in self.net.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, mean=0, std=1e-3)
-                nn.init.constant_(m.bias, val=0)
-
-    def forward(self, y_lin):
-        y_nl = y_lin + self.net(y_lin)
-        return y_nl
-
 
 if __name__ == '__main__':
 
-    # Set seed for reproducibility
+    # In[Set seed for reproducibility]
     np.random.seed(0)
     torch.manual_seed(0)
 
-    # Settings
-    add_noise = True
+    # In[Settings]
     lr = 1e-3
     num_iter = 20000
     test_freq = 100
     n_fit = 40000
     decimate = 1
     n_batch = 1
-    n_b = 3
-    n_f = 3
+    n_b = 2
+    n_a = 2
+    n_k = 1
 
-    # Column names in the dataset
+    model_name = "silver_feedback"
+    # In[Load dataset]
     COL_U = ['V1']
     COL_Y = ['V2']
-
-    # Load dataset
     df_X = pd.read_csv(os.path.join("data", "SNLS80mV.csv"))
 
-    # Extract data
+    # In[Extract data]
     y = np.array(df_X[COL_Y], dtype=np.float32)
     u = np.array(df_X[COL_U], dtype=np.float32)
-    u = u - np.mean(u)
+    #u = u - np.mean(u)
     fs = 10**7/2**14
     N = y.size
     ts = 1/fs
     t = np.arange(N)*ts
 
-    # Fit data
+    # In[Get fit data]
     y_fit = y[:n_fit:decimate]
     u_fit = u[:n_fit:decimate]
     t_fit = t[0:n_fit:decimate]
 
-    # Prepare data
-    u_fit_torch = torch.tensor(u_fit, dtype=torch.float, requires_grad=False)
-    y_fit_torch = torch.tensor(y_fit, dtype=torch.float, requires_grad=False)
-    y_hidden_torch = torch.tensor(y_fit, dtype=torch.float, requires_grad=True)
-
-
-    # First dynamical system custom defined
-    b1_coeff = np.array([0.0, 0.1], dtype=np.float32) # b_0. b_1
-    f1_coeff = np.array([-1.0, 0.0], dtype=np.float32) # a_1, a_2
-    G1 = LinearDynamicalSystem(b1_coeff, f1_coeff)
-    y_init_1 = torch.zeros((n_batch, n_f), dtype=torch.float)
-    u_init_1 = torch.zeros((n_batch, n_b), dtype=torch.float)
-
+    # In[Prepare data]
+    u_fit_torch = torch.tensor(u_fit[None, ...], dtype=torch.float, requires_grad=False)
+    y_fit_torch = torch.tensor(y_fit[None, ...], dtype=torch.float, requires_grad=False)
+    y_hidden_torch = torch.tensor(y_fit[None, ...], dtype=torch.float, requires_grad=True)
+    # optimize on the output to manage the feedback connection
+    # In[First dynamical system custom defined]
+    G1 = LinearSiso(n_b, n_a, n_k)
     # Static non-linearity
-    F_nl = StaticNonLin()
+    F_nl = StaticSisoNonLin()
 
     # Setup optimizer
     optimizer = torch.optim.Adam([
-        {'params': G1.parameters(), 'lr': 1e-3},
-        {'params': F_nl.parameters(), 'lr': 1e-3},
-        {'params': [y_hidden_torch], 'lr': 1e-4},
+        {'params': G1.parameters(), 'lr': lr},
+        {'params': F_nl.parameters(), 'lr': lr},
+        {'params': [y_hidden_torch], 'lr': 1e-3},
     ], lr=lr)
 
     # In[Train]
@@ -104,8 +74,7 @@ if __name__ == '__main__':
 
         # Simulate
         y_nl = F_nl(y_hidden_torch)
-        y_lin = G1(u_fit_torch - y_nl,  y_init_1, u_init_1)
-
+        y_lin = G1(u_fit_torch - y_nl)
 
         # Compute fit loss
         err_fit = y_fit_torch - y_lin
@@ -113,10 +82,8 @@ if __name__ == '__main__':
         loss = loss_fit
 
         # Compute consistency loss
-        #err_consistency = y_fit_torch - y_hidden_torch
         err_consistency = y_lin - y_hidden_torch
         loss_consistency = torch.mean(err_consistency**2)
-
 
         loss = loss_fit + loss_consistency
 
@@ -139,11 +106,18 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")  # 182 seconds
 
-    # In[To numpy]
+    # In[Save model]
+    model_folder = os.path.join("models", model_name)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
 
-    y_hidden = y_hidden_torch.detach().numpy()
-    y_lin = y_lin.detach().numpy()
-    y_nl = y_nl.detach().numpy()
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
+    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pkl"))
+    # In[Detach and reshape results]
+
+    y_hidden = y_hidden_torch.detach().numpy()[0, :, :]
+    y_lin = y_lin.detach().numpy()[0, :, :]
+    y_nl = y_nl.detach().numpy()[0, :, :]
 
     # In[Plot]
     plt.figure()
@@ -184,8 +158,8 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
-# In[Metrics]
 
+# In[Metrics]
     e_rms = util.metrics.error_rmse(y_fit, y_lin)[0]
     fit_idx = util.metrics.fit_index(y_fit, y_lin)[0]
     r_sq = util.metrics.r_squared(y_fit, y_lin)[0]

@@ -3,28 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import torch.nn as nn
-
-
-class StaticNonLin(nn.Module):
-
-    def __init__(self):
-        super(StaticNonLin, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Linear(1, 20),  # 2 states, 1 input
-            nn.ELU(),
-            nn.Linear(20, 1)
-        )
-
-        #for m in self.net.modules():
-        #    if isinstance(m, nn.Linear):
-        #        nn.init.normal_(m.weight, mean=0, std=1e-1)
-        #        nn.init.constant_(m.bias, val=0)
-
-    def forward(self, y_lin):
-        y_nl = y_lin + self.net(y_lin)
-        return y_nl
 
 
 if __name__ == '__main__':
