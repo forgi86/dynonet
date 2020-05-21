@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
-
 import util.metrics
 
 # In[Main]
@@ -19,18 +18,17 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     # In[Settings]
-    lr_ADAM = 2e-4
-    lr_BFGS = 1e0
-    num_iter_ADAM = 40000  # ADAM iterations 20000
-    num_iter_BFGS = 0  # final BFGS iterations
-    msg_freq = 100
-    n_skip = 5000
-    n_fit = 20000
+    lr_ADAM = 1e-4
+    lr_BFGS = 1e-1
+    num_iter_ADAM = 100000
+    num_iter_BFGS = 0
+    test_freq = 100
+    n_fit = 100000
     decimate = 1
     n_batch = 1
-    n_b = 8
-    n_a = 8
-    model_name = "model_WH_v1"
+    n_b = 3
+    n_a = 3
+    model_name = "model_WH"
 
     num_iter = num_iter_ADAM + num_iter_BFGS
 
@@ -45,7 +43,7 @@ if __name__ == '__main__':
     # Extract data
     y = np.array(df_X[COL_Y], dtype=np.float32)  # batch, time, channel
     u = np.array(df_X[COL_U], dtype=np.float32)
-    fs = np.array(df_X[COL_F].iloc[0], dtype=np.float32)
+    fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32)
     N = y.size
     ts = 1/fs
     t = np.arange(N)*ts
@@ -61,8 +59,8 @@ if __name__ == '__main__':
     y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
 
     # In[Prepare model]
-    G1 = LinearSiso(n_b, n_a, n_k=1)
-    F_nl = StaticSisoNonLin(n_hidden=10, activation='tanh')
+    G1 = LinearSiso(n_b, n_a)
+    F_nl = StaticSisoNonLin()
     G2 = LinearSiso(n_b, n_a)
 
     def model(u_in):
@@ -88,8 +86,8 @@ if __name__ == '__main__':
         y_hat, y1_nl, y1_lin = model(u_fit_torch)
 
         # Compute fit loss
-        err_fit = y_fit_torch[:, n_skip:, :] - y_hat[:, n_skip:, :]
-        loss = torch.mean(err_fit**2)*1000
+        err_fit = y_fit_torch - y_hat
+        loss = torch.mean(err_fit**2)
 
         # Backward pas
         loss.backward()
@@ -102,14 +100,14 @@ if __name__ == '__main__':
     for itr in range(0, num_iter):
 
         if itr < num_iter_ADAM:
-            msg_freq = 10
+            test_freq = 10
             loss_train = optimizer_ADAM.step(closure)
         else:
-            msg_freq = 10
+            test_freq = 10
             loss_train = optimizer_LBFGS.step(closure)
 
         LOSS.append(loss_train.item())
-        if itr % msg_freq == 0:
+        if itr % test_freq == 0:
             with torch.no_grad():
                 RMSE = torch.sqrt(loss_train)
             print(f'Iter {itr} | Fit Loss {loss_train:.6f} | RMSE:{RMSE:.4f}')
@@ -167,10 +165,4 @@ if __name__ == '__main__':
 
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
-    print(f"RMSE: {e_rms:.2f}") # target: 1mv
-
-
-
-
-
-
+    print(f"RMSE: {e_rms:.2f}")

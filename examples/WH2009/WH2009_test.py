@@ -5,6 +5,7 @@ import os
 from torchid.module.LTI import LinearSiso
 from torchid.module.static import StaticSisoNonLin
 
+import matplotlib
 import matplotlib.pyplot as plt
 import control
 import util.metrics
@@ -13,14 +14,13 @@ import util.metrics
 # In[Main]
 if __name__ == '__main__':
 
-    # In[
-    #model_name = 'model_WH_LBFGS'
-    model_name = 'model_WH'
+    matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+    # In[Settings]
+    model_name = 'model_WH_v1'
 
     # Settings
-    n_b = 4
-    n_a = 4
-    n_k = 1
+    n_b = 8
+    n_a = 8
 
     # Column names in the dataset
     COL_F = ['fs']
@@ -47,9 +47,9 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Create models
-    G1 = LinearSiso(n_b=n_b, n_a=n_a, n_k=n_k)
-    G2 = LinearSiso(n_b=n_b, n_a=n_a, n_k=n_k)
-    F_nl = StaticSisoNonLin()
+    G1 = LinearSiso(n_b=n_b, n_a=n_a, n_k=1)
+    G2 = LinearSiso(n_b=n_b, n_a=n_a, n_k=0)
+    F_nl = StaticSisoNonLin(n_hidden=10, activation='tanh')
 
     model_folder = os.path.join("models", model_name)
     # Create model parameters
@@ -74,7 +74,11 @@ if __name__ == '__main__':
     plt.plot(t, y_meas, 'k', label="$y$")
     plt.plot(t, y_hat, 'b', label="$\hat y$")
     plt.plot(t, y_meas - y_hat, 'r', label="$e$")
-    plt.legend(loc='upper left')
+    plt.grid(True)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Voltage (V)')
+    plt.legend(loc='upper right')
+    plt.savefig('WH_fit.pdf')
 
     # In[Inspect linear model]
 
@@ -128,6 +132,21 @@ if __name__ == '__main__':
     fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
     r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 
-    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
+    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
 
+    # In[Plot for paper]
+
+    t_test_start = 140000
+    len_plot = 1000
+
+    plt.figure(figsize=(4, 3))
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot], 'k', label="$y^{\mathrm{meas}}$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_hat[t_test_start:t_test_start+len_plot], 'b--', label="$y$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot] - y_hat[t_test_start:t_test_start+len_plot], 'r', label="$e$")
+    plt.grid(True)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Voltage (V)')
+    plt.legend(loc='upper right')
+    plt.tight_layout()
+    plt.savefig('WH_timetrace.pdf')

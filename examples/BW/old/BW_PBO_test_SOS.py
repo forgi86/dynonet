@@ -2,15 +2,15 @@ import os
 import h5py
 import numpy as np
 import torch
-import matplotlib
+import torch.nn as nn
 import matplotlib.pyplot as plt
-from torchid.module.LTI import LinearMimo
+import time
+from torchid.module.LTI import LinearSecondOrderMimo
 import util.metrics
 from torchid.module.static import StaticMimoNonLin
 
-if __name__ == '__main__':
 
-    matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+if __name__ == '__main__':
 
     # In[Settings]
     #h5_filename = 'train.h5'
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     #signal_name = 'multisine'
     signal_name = 'multisine'
     #signal_name = 'sinesweep' # available in test
-    model_name = "model_BW"
+    model_name = "model_BW_PBO_SOS_LBFGS_refined"
 
 
     # In[Load dataset]
@@ -53,14 +53,13 @@ if __name__ == '__main__':
 
     # In[Instantiate models]
 
-    # Model blocks
-    G1 = LinearMimo(1, 8, n_b=3, n_a=3, n_k=1)
-    F1 = StaticMimoNonLin(8, 4, n_hidden=10)  #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearMimo(4, 4, n_b=3, n_a=3)
-    F2 = StaticMimoNonLin(4, 1, n_hidden=10)
-    G3 = LinearMimo(1, 1, n_b=2, n_a=2, n_k=1)
+    # Second-order dynamical system
+    G1 = LinearSecondOrderMimo(1, 8)
+    F1 = StaticMimoNonLin(8, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = LinearSecondOrderMimo(4, 2)
+    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
+    G3 = LinearSecondOrderMimo(1, 1)
 
-    # Load identified model parameters
     model_folder = os.path.join("models", model_name)
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
     F1.load_state_dict(torch.load(os.path.join(model_folder, "F1.pkl")))
@@ -68,23 +67,26 @@ if __name__ == '__main__':
     F2.load_state_dict(torch.load(os.path.join(model_folder, "F2.pkl")))
     G3.load_state_dict(torch.load(os.path.join(model_folder, "G3.pkl")))
 
-    # Model structure
+    # In[Prepare tensors]
+    u_torch = torch.tensor(u)
+
+    # In[Predict]
     def model(u_in):
         y1_lin = G1(u_in)
         y1_nl = F1(y1_lin)
         y2_lin = G2(y1_nl)
-        y_branch1 = F2(y2_lin)
+        y2_nl = F2(y2_lin)
+        y3_lin = G3(y2_nl)
 
-        y_branch2 = G3(u_in)
-        y_hat = y_branch1 + y_branch2
-        return y_hat
+        y_hat = y3_lin
+        return y_hat, y1_nl, y1_lin
 
-    # In[Simulate]
-    u_torch = torch.tensor(u)
-    y_hat = model(u_torch)
+    y_hat, y1_nl, y1_lin = model(u_torch)
 
     # In[Detach & organize]
     y_hat = y_hat.detach().numpy()[0, :, :]
+    y1_lin = y1_lin.detach().numpy()[0, :, :]
+    y1_nl = y1_nl.detach().numpy()[0, :, :]
     y = y[0, :, :]
     u = u[0, :, :]
 
@@ -98,25 +100,9 @@ if __name__ == '__main__':
     plt.grid(True)
 
     # In[Metrics]
-    n_skip = 300
-    e_rms = util.metrics.error_rmse(scaler_y*y[n_skip:], scaler_y*y_hat[n_skip:])[0]
+    n_skip = 100
+    e_rms = util.metrics.error_rmse(y[n_skip:], y_hat[n_skip:])[0]*scaler_y
     fit_idx = util.metrics.fit_index(y[n_skip:], y_hat[n_skip:])[0]
     r_sq = util.metrics.r_squared(y[n_skip:], y_hat[n_skip:])[0]
 
     print(f"RMSE: {e_rms:.2E} mm\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
-
-
-    # In[Plot for paper]
-    t_test_start = 5900
-    len_plot = 400
-
-    plt.figure(figsize=(4, 3))
-    plt.plot(t[t_test_start:t_test_start+len_plot], y[t_test_start:t_test_start+len_plot], 'k', label="$y^{\mathrm{meas}}$")
-    plt.plot(t[t_test_start:t_test_start+len_plot], y_hat[t_test_start:t_test_start+len_plot], 'b--', label="$y$")
-    plt.plot(t[t_test_start:t_test_start+len_plot], e[t_test_start:t_test_start+len_plot], 'r', label="$e$")
-    plt.xlabel('Time (s)')
-    plt.ylabel('Displacement (mm)')
-    plt.legend(loc='upper right')
-    plt.tight_layout()
-    plt.grid(True)
-    plt.savefig('BW_timetrace.pdf')

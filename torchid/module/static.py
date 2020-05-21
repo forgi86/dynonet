@@ -10,6 +10,7 @@ class StaticMimoNonLin(nn.Module):
         in_channels (int): Number of input channels
         out_channels (int): Number of output channels
         n_hidden (int, optional): Number of nodes in the hidden layer. Default: 20
+        activation (str): Activation function. Either 'tanh', 'relu', or 'sigmoid'. Default: 'tanh'
 
     Shape:
         - Input: (..., in_channels)
@@ -24,12 +25,14 @@ class StaticMimoNonLin(nn.Module):
         >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
 
-    def __init__(self, in_channels, out_channels, n_hidden=20):
+    def __init__(self, in_channels, out_channels, n_hidden=20, activation='tanh'):
         super(StaticMimoNonLin, self).__init__()
 
+        activation_dict = {'tanh': nn.Tanh, 'relu': nn.ReLU, 'sigmoid': nn.Sigmoid}
+
         self.net = nn.Sequential(
-            nn.Linear(in_channels, n_hidden),  # 2 states, 1 input
-            nn.Tanh(),
+            nn.Linear(in_channels, n_hidden),
+            activation_dict[activation](),  #nn.Tanh(),
             nn.Linear(n_hidden, out_channels)
         )
 
@@ -44,7 +47,8 @@ class StaticSisoNonLin(StaticMimoNonLin):
 
     Args:
         n_hidden (int, optional): Number of nodes in the hidden layer. Default: 20
-
+        activation (str): Activation function. Either 'tanh', 'relu', or 'sigmoid'. Default: 'tanh'
+        s
     Shape:
         - Input: (..., in_channels)
         - Output: (..., out_channels)
@@ -56,8 +60,8 @@ class StaticSisoNonLin(StaticMimoNonLin):
         >>> u_in = torch.ones((batch_size, seq_len, in_channels))
         >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
-    def __init__(self, n_hidden=20):
-        super(StaticSisoNonLin, self).__init__(in_channels=1, out_channels=1, n_hidden=n_hidden)
+    def __init__(self, n_hidden=20, activation='tanh'):
+        super(StaticSisoNonLin, self).__init__(in_channels=1, out_channels=1, n_hidden=n_hidden, activation=activation)
 
 
 class StaticChannelWiseNonLin(nn.Module):

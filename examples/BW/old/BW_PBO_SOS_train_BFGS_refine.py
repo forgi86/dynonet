@@ -17,13 +17,14 @@ if __name__ == '__main__':
     h5_filename = 'train.h5'
     #h5_filename = 'test.h5'
     signal_name = 'multisine'
-    #signal_name = 'sinesweep' # available in test
-    model_name = "model_BW_PBO_SOS_LBFGS"
+    model_load_name = "model_BW_PBO_SOS_LBFGS"
+    model_save_name = "model_BW_PBO_SOS_LBFGS_refined"
 
-    lr_ADAM = 1e-3
+
+    lr_ADAM = 1e-4
     lr_BFGS = 1e-1
     num_iter_ADAM = 20000#5000 or 4000
-    num_iter_BFGS = 2000#500#1000
+    num_iter_BFGS = 0#100#500#1000
     msg_freq = 100
 
     num_iter = num_iter_ADAM + num_iter_BFGS
@@ -64,6 +65,14 @@ if __name__ == '__main__':
     G2 = LinearSecondOrderMimo(4, 2)
     F2 = StaticMimoNonLin(2, 1, n_hidden=10)
     G3 = LinearSecondOrderMimo(1, 1)
+
+    if model_load_name is not None:
+        model_folder = os.path.join("models", model_load_name)
+        G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
+        F1.load_state_dict(torch.load(os.path.join(model_folder, "F1.pkl")))
+        G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
+        F2.load_state_dict(torch.load(os.path.join(model_folder, "F2.pkl")))
+        G3.load_state_dict(torch.load(os.path.join(model_folder, "G3.pkl")))
 
     def model(u_in):
         y1_lin = G1(u_in)
@@ -139,15 +148,16 @@ if __name__ == '__main__':
 
     # In[Save model]
 
-    model_folder = os.path.join("models", model_name)
-    if not os.path.exists(model_folder):
-        os.makedirs(model_folder)
+    if model_save_name is not None:
+        model_folder = os.path.join("models", model_save_name)
+        if not os.path.exists(model_folder):
+            os.makedirs(model_folder)
 
-    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
-    torch.save(F1.state_dict(), os.path.join(model_folder, "F1.pkl"))
-    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
-    torch.save(F2.state_dict(), os.path.join(model_folder, "F2.pkl"))
-    torch.save(G3.state_dict(), os.path.join(model_folder, "G3.pkl"))
+        torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
+        torch.save(F1.state_dict(), os.path.join(model_folder, "F1.pkl"))
+        torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
+        torch.save(F2.state_dict(), os.path.join(model_folder, "F2.pkl"))
+        torch.save(G3.state_dict(), os.path.join(model_folder, "G3.pkl"))
 
 
     # In[Simulate one more time]
@@ -180,7 +190,8 @@ if __name__ == '__main__':
     ax.plot(LOSS)
     plt.grid(True)
     fig_name = 'loss.pdf'
-    plt.savefig(os.path.join("models", model_name, fig_name))
+    if model_save_name is not None:
+        plt.savefig(os.path.join("models", model_save_name, fig_name))
 
 
 

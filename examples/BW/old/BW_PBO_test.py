@@ -18,7 +18,8 @@ if __name__ == '__main__':
     signal_name = 'multisine'
     #signal_name = 'multisine'
     #signal_name = 'sinesweep' # available in test
-    model_name = "model_BW_PBO_LBFGS_refined"
+    #model_name = "model_BW_PBO_LBFGS" # "model_BW_PBO_LBFGS_refined"
+    model_name =  "model_BW_PBO_LBFGS_refined"
 
     n_b = 2
     n_a = 2
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     plt.grid(True)
 
     # In[Metrics]
-    e_rms = util.metrics.error_rmse(y, y_hat)[0]*scaler_y
+    e_rms = util.metrics.error_rmse(y[300:, :], y_hat[300:, :])[0]*scaler_y
     fit_idx = util.metrics.fit_index(y, y_hat)[0]
     r_sq = util.metrics.r_squared(y, y_hat)[0]
 

@@ -16,8 +16,10 @@ if __name__ == '__main__':
     y_name = 'yval_' + signal_name
     y_filename = y_name + '.mat'
 
-    u = scipy.io.loadmat(os.path.join("BoucWenFiles", "Test signals", "Validation signals", u_filename))[u_name].reshape(1, -1)
-    y = scipy.io.loadmat(os.path.join("BoucWenFiles", "Test signals", "Validation signals", y_filename))[y_name].reshape(1, -1)
+    u = scipy.io.loadmat(os.path.join("BoucWenFiles", "Test signals", "Validation signals", u_filename))[u_name]\
+        .reshape(1, -1)
+    y = scipy.io.loadmat(os.path.join("BoucWenFiles", "Test signals", "Validation signals", y_filename))[y_name]\
+        .reshape(1, -1)
 
     fs = np.array([750.0])
 

@@ -43,8 +43,9 @@ class LinearMimo(torch.nn.Module):
         self.n_k = n_k
 
         with torch.no_grad():
-            self.a_coeff[:] = torch.randn(self.a_coeff.shape) * 0.1
-            self.b_coeff[:] = torch.randn(self.b_coeff.shape) * 0.1
+            init_range = 0.01
+            self.a_coeff[:] = (torch.rand(self.a_coeff.shape) - 0.5) * 2 * init_range
+            self.b_coeff[:] = (torch.rand(self.b_coeff.shape) - 0.5) * 2 * init_range
 
     def forward(self, u_in, y_0=None, u_0=None):
         if self.n_k != 0:
@@ -229,7 +230,7 @@ class LinearMimoFir(torch.nn.Module):
     def get_tfdata(self):
         return self.__get_tfdata__()
 
-    def __gets_filtdata__(self):
+    def __get_filtdata__(self):
         b_coeff, a_coeff = self.__get_ba_coeff__()
         b_seq = b_coeff
         a_seq = np.empty_like(a_coeff, shape=(self.out_channels, self.in_channels, self.n_a + 1))
@@ -315,4 +316,4 @@ class LinearSecondOrderMimo(torch.nn.Module):
 
 class LinearSecondOrderSiso(LinearSecondOrderMimo):
     def __init__(self):
-        super(LinearSecondOrderSiso, self).__init__(1, 1, 2, 2) # in_channels, out_channels, n_b, n_a
+        super(LinearSecondOrderSiso, self).__init__(1, 1) # in_channels, out_channels, n_b, n_a

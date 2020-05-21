@@ -4,11 +4,9 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearMimo
+from torchid.module.LTI import LinearSecondOrderMimo
 from torchid.module.static import StaticMimoNonLin
 
-
-# Good results, but a bit slow...
 if __name__ == '__main__':
 
     # Set seed for reproducibility
@@ -20,12 +18,12 @@ if __name__ == '__main__':
     #h5_filename = 'test.h5'
     signal_name = 'multisine'
     #signal_name = 'sinesweep' # available in test
-    model_name = "model_BW"
+    model_name = "model_BW_PBO_SOS_LBFGS"
 
-    lr_ADAM = 2e-3
-    lr_BFGS = 1e0
-    num_iter_ADAM = 10000 #5000 or 4000
-    num_iter_BFGS = 0 #500#1000
+    lr_ADAM = 1e-3
+    lr_BFGS = 1e-1
+    num_iter_ADAM = 20000#5000 or 4000
+    num_iter_BFGS = 2000#500#1000
     msg_freq = 100
 
     num_iter = num_iter_ADAM + num_iter_BFGS
@@ -60,23 +58,30 @@ if __name__ == '__main__':
 
     # In[Instantiate models]
 
-    # Model blocks
-    G1 = LinearMimo(1, 8, n_b=3, n_a=3, n_k=1)
-    F1 = StaticMimoNonLin(8, 4, n_hidden=10, activation='tanh')  # torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearMimo(4, 4, n_b=3, n_a=3)
-    F2 = StaticMimoNonLin(4, 1, n_hidden=10, activation='tanh')
-    G3 = LinearMimo(1, 1, n_b=2, n_a=2, n_k=1) # was 2!
+    # Second-order dynamical system
+    G1 = LinearSecondOrderMimo(1, 8)
+    F1 = StaticMimoNonLin(8, 4, n_hidden=10)  #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = LinearSecondOrderMimo(4, 2)
+    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
+    G3 = LinearSecondOrderMimo(1, 1)
 
-    # Model structure
     def model(u_in):
         y1_lin = G1(u_in)
         y1_nl = F1(y1_lin)
         y2_lin = G2(y1_nl)
-        y_branch1 = F2(y2_lin)
+        y2_nl = F2(y2_lin)
+        y3_lin = G3(y2_nl)
 
-        y_branch2 = G3(u_in)
-        y_hat = y_branch1 + y_branch2
-        return y_hat
+        y_hat = y3_lin
+        return y_hat, y1_nl, y1_lin
+
+    #with torch.no_grad():
+
+    #    G1.a_coeff[:] = torch.randn(G1.a_coeff.shape)*0.1
+    #    G1.b_coeff[:] = torch.randn(G1.b_coeff.shape)*0.1
+
+    #    G2.a_coeff[:] = torch.randn(G2.a_coeff.shape)*0.1
+    #    G2.b_coeff[:] = torch.randn(G2.b_coeff.shape)*0.1
 
 
     # In[Setup optimizer and closure]
@@ -92,15 +97,13 @@ if __name__ == '__main__':
     optimizer_LBFGS = torch.optim.LBFGS(params, lr=lr_BFGS)#, tolerance_grad=1e-7, line_search_fn='strong_wolfe')
 
     def closure():
-
         optimizer_LBFGS.zero_grad()
 
         # Simulate
-        y_hat = model(u_fit_torch)
+        y_hat, y1_nl, y1_lin = model(u_fit_torch)
 
         # Compute fit loss
-        n_skip = 300
-        err_fit = y_fit_torch[:, n_skip:, :] - y_hat[:, n_skip:, :]
+        err_fit = y_fit_torch - y_hat
         loss = torch.mean(err_fit**2)
 
         # Backward pas
@@ -132,7 +135,7 @@ if __name__ == '__main__':
             print(f'Iter {itr} | Fit Loss {loss_train:.6f} | RMSE:{RMSE:.4f}')
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}")  # 600 seconds
+    print(f"\nTrain time: {train_time:.2f}") # 1900 seconds, loss was still going down
 
     # In[Save model]
 
@@ -149,11 +152,13 @@ if __name__ == '__main__':
 
     # In[Simulate one more time]
     with torch.no_grad():
-        y_hat = model(u_fit_torch)
+        y_hat, y1_nl, y1_lin = model(u_fit_torch)
 
     # In[Detach tensors]
 
     y_hat = y_hat.detach().numpy()
+    y1_lin = y1_lin.detach().numpy()
+    y1_nl = y1_nl.detach().numpy()
 
     # In[Plot signals]
 

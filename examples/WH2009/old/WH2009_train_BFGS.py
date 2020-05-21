@@ -19,16 +19,17 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     # In[Settings]
-    lr_ADAM = 1e-4
+    lr_ADAM = 2e-4
     lr_BFGS = 1e0
-    num_iter_ADAM = 20000
-    num_iter_BFGS = 1000
+    num_iter_ADAM = 20000 #20000
+    num_iter_BFGS = 0
     msg_freq = 100
+    n_skip = 5000
     n_fit = 100000
     decimate = 1
     n_batch = 1
-    n_b = 3
-    n_a = 3
+    n_b = 5
+    n_a = 5
     model_name = "model_WH_LBFGS"
 
     num_iter = num_iter_ADAM + num_iter_BFGS
@@ -44,7 +45,7 @@ if __name__ == '__main__':
     # Extract data
     y = np.array(df_X[COL_Y], dtype=np.float32)  # batch, time, channel
     u = np.array(df_X[COL_U], dtype=np.float32)
-    fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32)
+    fs = np.array(df_X[COL_F].iloc[0], dtype=np.float32)
     N = y.size
     ts = 1/fs
     t = np.arange(N)*ts
@@ -60,8 +61,8 @@ if __name__ == '__main__':
     y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
 
     # In[Prepare model]
-    G1 = LinearSiso(n_b, n_a)
-    F_nl = StaticSisoNonLin()
+    G1 = LinearSiso(n_b, n_a, n_k=1)
+    F_nl = StaticSisoNonLin(n_hidden=8, activation='tanh')
     G2 = LinearSiso(n_b, n_a)
 
     def model(u_in):
@@ -87,7 +88,7 @@ if __name__ == '__main__':
         y_hat, y1_nl, y1_lin = model(u_fit_torch)
 
         # Compute fit loss
-        err_fit = y_fit_torch - y_hat
+        err_fit = y_fit_torch[:, n_skip:, :] - y_hat[:, n_skip:, :]
         loss = torch.mean(err_fit**2)
 
         # Backward pas

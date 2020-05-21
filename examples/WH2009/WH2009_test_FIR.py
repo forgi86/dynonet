@@ -131,6 +131,6 @@ if __name__ == '__main__':
     fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
     r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 
-    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
+    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
 
 

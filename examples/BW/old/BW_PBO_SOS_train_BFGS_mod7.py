@@ -4,9 +4,11 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearSecondOrderMimo
+from torchid.module.LTI import LinearMimo
 from torchid.module.static import StaticMimoNonLin
 
+
+# Good results, but a bit slow...
 if __name__ == '__main__':
 
     # Set seed for reproducibility
@@ -17,14 +19,13 @@ if __name__ == '__main__':
     h5_filename = 'train.h5'
     #h5_filename = 'test.h5'
     signal_name = 'multisine'
-    model_load_name = "model_BW_PBO_SOS_LBFGS"
-    model_save_name = "model_BW_PBO_SOS_LBFGS_refined"
+    #signal_name = 'sinesweep' # available in test
+    model_name = "model_BW_PBO_SOS_LBFGS_mod7"
 
-
-    lr_ADAM = 1e-4
-    lr_BFGS = 1e-1
-    num_iter_ADAM = 10000#5000 or 4000
-    num_iter_BFGS = 100#500#1000
+    lr_ADAM = 2e-3
+    lr_BFGS = 1e0
+    num_iter_ADAM = 10000 #5000 or 4000
+    num_iter_BFGS = 0 #500#1000
     msg_freq = 100
 
     num_iter = num_iter_ADAM + num_iter_BFGS
@@ -60,37 +61,20 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearSecondOrderMimo(1, 8)
-    F1 = StaticMimoNonLin(8, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearSecondOrderMimo(4, 2)
-    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
-    G3 = LinearSecondOrderMimo(1, 1)
-
-    if model_load_name is not None:
-        model_folder = os.path.join("models", model_load_name)
-        G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
-        F1.load_state_dict(torch.load(os.path.join(model_folder, "F1.pkl")))
-        G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
-        F2.load_state_dict(torch.load(os.path.join(model_folder, "F2.pkl")))
-        G3.load_state_dict(torch.load(os.path.join(model_folder, "G3.pkl")))
+    G1 = LinearMimo(1, 8, n_b=3, n_a=3, n_k=1)
+    F1 = StaticMimoNonLin(8, 4, n_hidden=10)  # torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = LinearMimo(4, 4, n_b=3, n_a=3)
+    F2 = StaticMimoNonLin(4, 1, n_hidden=10)
+    G3 = LinearMimo(1, 1, n_b=2, n_a=2, n_k=1)
 
     def model(u_in):
         y1_lin = G1(u_in)
         y1_nl = F1(y1_lin)
         y2_lin = G2(y1_nl)
         y2_nl = F2(y2_lin)
-        y3_lin = G3(y2_nl)
 
-        y_hat = y3_lin
+        y_hat = y2_nl + G3(u_in)
         return y_hat, y1_nl, y1_lin
-
-    #with torch.no_grad():
-
-    #    G1.a_coeff[:] = torch.randn(G1.a_coeff.shape)*0.1
-    #    G1.b_coeff[:] = torch.randn(G1.b_coeff.shape)*0.1
-
-    #    G2.a_coeff[:] = torch.randn(G2.a_coeff.shape)*0.1
-    #    G2.b_coeff[:] = torch.randn(G2.b_coeff.shape)*0.1
 
 
     # In[Setup optimizer and closure]
@@ -112,7 +96,7 @@ if __name__ == '__main__':
         y_hat, y1_nl, y1_lin = model(u_fit_torch)
 
         # Compute fit loss
-        err_fit = y_fit_torch - y_hat
+        err_fit = y_fit_torch[:, 300:, :] - y_hat[:, 300:, :]
         loss = torch.mean(err_fit**2)
 
         # Backward pas
@@ -137,6 +121,9 @@ if __name__ == '__main__':
             msg_freq = 10
             loss_train = optimizer_LBFGS.step(closure)
 
+        if itr == 5000:
+            for group in optimizer_ADAM.param_groups:
+                group['lr'] = 2e-4
         LOSS.append(loss_train.item())
         if itr % msg_freq == 0:
             with torch.no_grad():
@@ -144,20 +131,19 @@ if __name__ == '__main__':
             print(f'Iter {itr} | Fit Loss {loss_train:.6f} | RMSE:{RMSE:.4f}')
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}") # 1900 seconds, loss was still going down
+    print(f"\nTrain time: {train_time:.2f}")  # 1900 seconds, loss was still going down
 
     # In[Save model]
 
-    if model_save_name is not None:
-        model_folder = os.path.join("models", model_save_name)
-        if not os.path.exists(model_folder):
-            os.makedirs(model_folder)
+    model_folder = os.path.join("models", model_name)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
 
-        torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
-        torch.save(F1.state_dict(), os.path.join(model_folder, "F1.pkl"))
-        torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
-        torch.save(F2.state_dict(), os.path.join(model_folder, "F2.pkl"))
-        torch.save(G3.state_dict(), os.path.join(model_folder, "G3.pkl"))
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
+    torch.save(F1.state_dict(), os.path.join(model_folder, "F1.pkl"))
+    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
+    torch.save(F2.state_dict(), os.path.join(model_folder, "F2.pkl"))
+    torch.save(G3.state_dict(), os.path.join(model_folder, "G3.pkl"))
 
 
     # In[Simulate one more time]
@@ -175,6 +161,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(2, 1, sharex=True)
     ax[0].plot(t, y[0, :, 0], label='$y$')
     ax[0].plot(t, y_hat[0, :, 0], label='$\hat y$')
+    ax[0].plot(t, y[0, :, 0] - y_hat[0, :, 0], label='$e$')
     ax[0].set_xlabel('Time (s)')
     ax[0].set_ylabel('Displacement (mm)')
     ax[0].grid(True)
@@ -190,8 +177,7 @@ if __name__ == '__main__':
     ax.plot(LOSS)
     plt.grid(True)
     fig_name = 'loss.pdf'
-    if model_save_name is not None:
-        plt.savefig(os.path.join("models", model_name, fig_name))
+    plt.savefig(os.path.join("models", model_name, fig_name))
 
 
 

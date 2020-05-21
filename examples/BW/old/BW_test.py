@@ -5,9 +5,10 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearSecondOrderMimo
+from torchid.module.LTI import LinearMimo
+from torchid.module.static import StaticSisoNonLin
 import util.metrics
-from torchid.module.static import StaticMimoNonLin
+
 
 
 if __name__ == '__main__':
@@ -16,10 +17,15 @@ if __name__ == '__main__':
     h5_filename = 'train.h5'
     #h5_filename = 'test.h5'
     signal_name = 'multisine'
-    #signal_name = 'multisine'
     #signal_name = 'sinesweep' # available in test
-    model_name = "model_BW_PBO_SOS_LBFGS_refined"
 
+    n_b = 3
+    n_a = 3
+    n_fit = 100000
+    n_batch = 1
+    lr = 1e-4
+    num_iter = 10000
+    msg_freq = 100
 
     # In[Load dataset]
 
@@ -40,11 +46,8 @@ if __name__ == '__main__':
 
 
     # In[Scale data]
-    scaler_y = 0.0006  # approx std(y_train)
-    scaler_u = 50  # approx std(u_train)
-
-    y = y/scaler_y
-    u = u/scaler_u
+    y = y/np.std(y)
+    u = u/np.std(u)
 
     # In[Data to float 32]
     y = y.astype(np.float32)
@@ -54,39 +57,31 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearSecondOrderMimo(1, 8)
-    F1 = StaticMimoNonLin(8, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearSecondOrderMimo(4, 2)
-    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
-    G3 = LinearSecondOrderMimo(1, 1)
+    G1 = LinearMimo(1, 1, n_b, n_a)
+    G2 = LinearMimo(1, 1, n_b, n_a)
+    # Static sandwitched non-linearity
+    F_nl = StaticSisoNonLin()
 
+    # In[Load model parameters]
+    model_name = "model_BW_1"
     model_folder = os.path.join("models", model_name)
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
-    F1.load_state_dict(torch.load(os.path.join(model_folder, "F1.pkl")))
+    F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
     G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
-    F2.load_state_dict(torch.load(os.path.join(model_folder, "F2.pkl")))
-    G3.load_state_dict(torch.load(os.path.join(model_folder, "G3.pkl")))
 
     # In[Prepare tensors]
     u_torch = torch.tensor(u)
 
     # In[Predict]
-    def model(u_in):
-        y1_lin = G1(u_in)
-        y1_nl = F1(y1_lin)
-        y2_lin = G2(y1_nl)
-        y2_nl = F2(y2_lin)
-        y3_lin = G3(y2_nl)
-
-        y_hat = y3_lin
-        return y_hat, y1_nl, y1_lin
-
-    y_hat, y1_nl, y1_lin = model(u_torch)
+    y1_lin = G1(u_torch)
+    y1_nl = F_nl(y1_lin)
+    y_hat = G2(y1_nl)
 
     # In[Detach & organize]
     y_hat = y_hat.detach().numpy()[0, :, :]
     y1_lin = y1_lin.detach().numpy()[0, :, :]
     y1_nl = y1_nl.detach().numpy()[0, :, :]
+
     y = y[0, :, :]
     u = u[0, :, :]
 
@@ -100,8 +95,8 @@ if __name__ == '__main__':
     plt.grid(True)
 
     # In[Metrics]
-    e_rms = util.metrics.error_rmse(y, y_hat)[0]*scaler_y
+    e_rms = 1000*util.metrics.error_rmse(y, y_hat)[0]
     fit_idx = util.metrics.fit_index(y, y_hat)[0]
     r_sq = util.metrics.r_squared(y, y_hat)[0]
 
-    print(f"RMSE: {e_rms:.2E} mm\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
+    print(f"RMSE: {e_rms:.2f} mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
