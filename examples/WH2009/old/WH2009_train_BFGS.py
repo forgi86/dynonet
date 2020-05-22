@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearSiso
-from torchid.module.static import StaticSisoNonLin
+from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.static import SisoStaticNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -61,9 +61,9 @@ if __name__ == '__main__':
     y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
 
     # In[Prepare model]
-    G1 = LinearSiso(n_b, n_a, n_k=1)
-    F_nl = StaticSisoNonLin(n_hidden=8, activation='tanh')
-    G2 = LinearSiso(n_b, n_a)
+    G1 = SisoLinearDynamicOperator(n_b, n_a, n_k=1)
+    F_nl = SisoStaticNonLin(n_hidden=8, activation='tanh')
+    G2 = SisoLinearDynamicOperator(n_b, n_a)
 
     def model(u_in):
         y1_lin = G1(u_fit_torch)

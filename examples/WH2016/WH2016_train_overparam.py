@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin
 import matplotlib.pyplot as plt
 import time
 import util.metrics
@@ -68,11 +68,11 @@ if __name__ == '__main__':
 
     # In[Setup model]
     # Second-order dynamical system
-    G1 = LinearMimo(1, 4, n_b, n_a, n_k=0)
-    F1 = StaticMimoNonLin(4, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearMimo(4, 2, n_b, n_a, n_k=0)
-    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
-    G3 = LinearMimo(1, 1, n_b, n_a, n_k=0)
+    G1 = MimoLinearDynamicOperator(1, 4, n_b, n_a, n_k=0)
+    F1 = MimoStaticNonLin(4, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = MimoLinearDynamicOperator(4, 2, n_b, n_a, n_k=0)
+    F2 = MimoStaticNonLin(2, 1, n_hidden=10)
+    G3 = MimoLinearDynamicOperator(1, 1, n_b, n_a, n_k=0)
 
 
     def model(u_in):

@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearSiso
-from torchid.module.static import StaticSisoNonLin
+from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.static import SisoStaticNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -66,8 +66,8 @@ if __name__ == '__main__':
     u_torch = torch.tensor(u[None, :, :], dtype=torch.float, requires_grad=False)
     y_meas_torch = torch.tensor(y_noise[None, :, :], dtype=torch.float)
     y_true_torch = torch.tensor(y_nonoise[None, :, :], dtype=torch.float)
-    G = LinearSiso(n_b, n_a, n_k=1)
-    nn_static = StaticSisoNonLin()
+    G = SisoLinearDynamicOperator(n_b, n_a, n_k=1)
+    nn_static = SisoStaticNonLin()
 
     # Setup optimizer
     params_lin = G.parameters()

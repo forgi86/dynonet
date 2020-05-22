@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class StaticMimoNonLin(nn.Module):
+class MimoStaticNonLin(nn.Module):
     r"""Applies a Static MIMO non-linearity.
     The non-linearity is implemented as a feed-forward neural network.
 
@@ -19,14 +19,14 @@ class StaticMimoNonLin(nn.Module):
     Examples::
 
         >>> in_channels, out_channels = 2, 4
-        >>> F = StaticMimoNonLin(in_channels, out_channels)
+        >>> F = MimoStaticNonLin(in_channels, out_channels)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len, in_channels))
         >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
 
     def __init__(self, in_channels, out_channels, n_hidden=20, activation='tanh'):
-        super(StaticMimoNonLin, self).__init__()
+        super(MimoStaticNonLin, self).__init__()
 
         activation_dict = {'tanh': nn.Tanh, 'relu': nn.ReLU, 'sigmoid': nn.Sigmoid}
 
@@ -41,7 +41,7 @@ class StaticMimoNonLin(nn.Module):
         return y_nl
 
 
-class StaticSisoNonLin(StaticMimoNonLin):
+class SisoStaticNonLin(MimoStaticNonLin):
     r"""Applies a Static SISO non-linearity.
     The non-linearity is implemented as a feed-forward neural network.
 
@@ -55,16 +55,16 @@ class StaticSisoNonLin(StaticMimoNonLin):
 
     Examples::
 
-        >>> F = StaticSisoNonLin(n_hidden=20)
+        >>> F = SisoStaticNonLin(n_hidden=20)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len, in_channels))
         >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
     def __init__(self, n_hidden=20, activation='tanh'):
-        super(StaticSisoNonLin, self).__init__(in_channels=1, out_channels=1, n_hidden=n_hidden, activation=activation)
+        super(SisoStaticNonLin, self).__init__(in_channels=1, out_channels=1, n_hidden=n_hidden, activation=activation)
 
 
-class StaticChannelWiseNonLin(nn.Module):
+class MimoChannelWiseNonLin(nn.Module):
     r"""Applies a Channel-wise non-linearity.
     The non-linearity is implemented as a set of feed-forward neural networks (each one operating on a different channel).
 
@@ -79,13 +79,13 @@ class StaticChannelWiseNonLin(nn.Module):
     Examples::
 
         >>> channels = 4
-        >>> F = StaticMimoNonLin(channels)
+        >>> F = MimoStaticNonLin(channels)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len, channels))
         >>> y_out = F(u_in, y_0, u_0) # shape: (batch_size, seq_len, channels)
     """
     def __init__(self, channels, n_hidden=10):
-        super(StaticChannelWiseNonLin, self).__init__()
+        super(MimoChannelWiseNonLin, self).__init__()
 
         self.net = nn.ModuleList()
         for channel_idx in range(channels):
@@ -110,6 +110,6 @@ class StaticChannelWiseNonLin(nn.Module):
 if __name__ == '__main__':
 
     channels = 4
-    nn1 = StaticChannelWiseNonLin(channels)
+    nn1 = MimoChannelWiseNonLin(channels)
     in_data = torch.randn(100, 10, channels)
     xx = net_out = nn1(in_data)

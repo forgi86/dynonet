@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticChannelWiseNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoChannelWiseNonLin
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -50,9 +50,9 @@ if __name__ == '__main__':
     u_torch = torch.tensor(u[None, :, :], dtype=torch.float, requires_grad=False)
     y_meas_torch = torch.tensor(y_noise[None, :, :], dtype=torch.float)
     y_true_torch = torch.tensor(y_nonoise[None, :, :], dtype=torch.float)
-    G1 = LinearMimo(in_channels=1, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
-    nn_static = StaticChannelWiseNonLin(channels=2, n_hidden=10) #StaticChannelWiseNonLin(in_channels=2, out_channels=2, n_hidden=10)
-    G2 = LinearMimo(in_channels=2, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
+    G1 = MimoLinearDynamicOperator(in_channels=1, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
+    nn_static = MimoChannelWiseNonLin(channels=2, n_hidden=10) #StaticChannelWiseNonLin(in_channels=2, out_channels=2, n_hidden=10)
+    G2 = MimoLinearDynamicOperator(in_channels=2, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
 
     # Setup optimizer
 

@@ -2,12 +2,10 @@ import torch
 import numpy as np
 import scipy as sp
 import scipy.signal
-import time
-from util.filtering import lfiltic_vec, lfilter_mimo,  lfilter_mimo_components
-from torch.nn.parameter import Parameter
+from util.filtering import lfilter_mimo_components
 
 
-class LinearMimoFunction(torch.autograd.Function):
+class MimoLinearDynamicOperatorFun(torch.autograd.Function):
     r"""Applies a linear second-order filter to the incoming data: :math:`y = G(u)`
 
     Args:
@@ -34,7 +32,7 @@ class LinearMimoFunction(torch.autograd.Function):
 
     Examples::
 
-        >>> G = LinearMimoFunction.apply
+        >>> G = MimoLinearDynamicOperatorFun.apply
         >>> n_b = 2
         >>> n_f = 2
         >>> N = 500
@@ -198,7 +196,7 @@ if __name__ == '__main__':
 
     b_coeff = torch.tensor(np.random.randn(*(out_ch, in_ch, n_b)), requires_grad=True)
     a_coeff = torch.tensor(np.random.rand(*(out_ch, in_ch, n_a)), requires_grad=True)
-    G = LinearMimoFunction.apply
+    G = MimoLinearDynamicOperatorFun.apply
     y_0 = torch.tensor(0*np.random.randn(*(out_ch, in_ch, n_a)))
     u_0 = torch.tensor(0*np.random.randn(*(out_ch, in_ch, n_b)))
     u_in = torch.tensor(1*np.random.randn(*(batch_size, seq_len, in_ch)), requires_grad=True)

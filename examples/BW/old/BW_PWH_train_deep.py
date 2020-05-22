@@ -4,8 +4,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin, StaticChannelWiseNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin, MimoChannelWiseNonLin
 
 torch.nn.init
 if __name__ == '__main__':
@@ -59,11 +59,11 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearMimo(1, 4, n_b, n_a)
-    F1 = StaticMimoNonLin(4, 4, n_hidden=10)
-    G2 = LinearMimo(4, 2, n_b, n_a)
-    F2 = StaticChannelWiseNonLin(2, n_hidden=10)
-    G3 = LinearMimo(2, 1, n_b, n_a)
+    G1 = MimoLinearDynamicOperator(1, 4, n_b, n_a)
+    F1 = MimoStaticNonLin(4, 4, n_hidden=10)
+    G2 = MimoLinearDynamicOperator(4, 2, n_b, n_a)
+    F2 = MimoChannelWiseNonLin(2, n_hidden=10)
+    G3 = MimoLinearDynamicOperator(2, 1, n_b, n_a)
 
     with torch.no_grad():
 

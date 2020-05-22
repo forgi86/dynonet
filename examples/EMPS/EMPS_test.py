@@ -6,8 +6,8 @@ import scipy as sp
 import scipy.io
 import torch
 import matplotlib.pyplot as plt
-from torchid.module.LTI import LinearMimo, LinearSiso
-from torchid.module.static import StaticMimoNonLin, StaticMimoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator, SisoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin, MimoStaticNonLin
 import util.metrics
 
 if __name__ == '__main__':
@@ -47,10 +47,10 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Model blocks
-    G1 = LinearMimo(1, 10, n_b=2, n_a=2, n_k=1)
+    G1 = MimoLinearDynamicOperator(1, 10, n_b=2, n_a=2, n_k=1)
     # Static sandwitched non-linearity
-    F1 = StaticMimoNonLin(10, 5, activation='tanh')
-    G2 = LinearMimo(5, 1, n_b=2, n_a=2, n_k=0)
+    F1 = MimoStaticNonLin(10, 5, activation='tanh')
+    G2 = MimoLinearDynamicOperator(5, 1, n_b=2, n_a=2, n_k=0)
 
     # Load identified model parameters
     model_folder = os.path.join("models", model_name)

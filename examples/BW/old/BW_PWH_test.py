@@ -5,9 +5,9 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import util.metrics
-from torchid.module.static import StaticMimoNonLin
+from torchid.module.static import MimoStaticNonLin
 
 
 if __name__ == '__main__':
@@ -57,9 +57,9 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearMimo(1, 3, n_b, n_a)
-    F_nl = StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearMimo(3, 1, n_b, n_a)
+    G1 = MimoLinearDynamicOperator(1, 3, n_b, n_a)
+    F_nl = MimoStaticNonLin(3, 3, n_hidden=10)
+    G2 = MimoLinearDynamicOperator(3, 1, n_b, n_a)
     # Static sandwitched non-linearity
 
     # In[Load model parameters]

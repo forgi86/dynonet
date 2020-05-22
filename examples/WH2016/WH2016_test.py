@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import control
@@ -81,8 +81,8 @@ if __name__ == '__main__':
     # Create models
 
     # Second-order dynamical system
-    G1 = LinearMimo(1, 1, n_b, n_a)
-    G2 = LinearMimo(1, 1, n_b, n_a)
+    G1 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
+    G2 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
     # Static sandwitched non-linearity
     F_nl = StaticNonLin()
 

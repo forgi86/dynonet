@@ -4,8 +4,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearSiso
-from torchid.module.static import StaticSisoNonLin
+from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.static import SisoStaticNonLin
 import util.metrics
 
 if __name__ == '__main__':
@@ -51,9 +51,9 @@ if __name__ == '__main__':
     y_hidden_torch = torch.tensor(y_fit[None, ...], dtype=torch.float, requires_grad=True)
     # optimize on the output to manage the feedback connection
     # In[First dynamical system custom defined]
-    G1 = LinearSiso(n_b, n_a, n_k)
+    G1 = SisoLinearDynamicOperator(n_b, n_a, n_k)
     # Static non-linearity
-    F_nl = StaticSisoNonLin()
+    F_nl = SisoStaticNonLin()
 
     # Setup optimizer
     optimizer = torch.optim.Adam([

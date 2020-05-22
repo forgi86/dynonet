@@ -1,10 +1,10 @@
 import torch
 import numpy as np  # temporary
 from torch.nn.parameter import Parameter
-from torchid.functional.linearmimo import LinearMimoFunction
+from torchid.functional.lti import MimoLinearDynamicOperatorFun
 
 
-class LinearMimo(torch.nn.Module):
+class MimoLinearDynamicOperator(torch.nn.Module):
     r"""Applies a Dynamical Linear MIMO system to an input signal.
 
     Args:
@@ -26,14 +26,14 @@ class LinearMimo(torch.nn.Module):
 
         >>> in_channels, out_channels = 2, 4
         >>> n_b, n_a, n_k = 2, 2, 1
-        >>> G = LinearMimo(in_channels, out_channels, n_b, n_a, n_k)
+        >>> G = MimoLinearDynamicOperator(in_channels, out_channels, n_b, n_a, n_k)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len, in_channels))
         >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
 
     def __init__(self, in_channels, out_channels, n_b, n_a, n_k=0):
-        super(LinearMimo, self).__init__()
+        super(MimoLinearDynamicOperator, self).__init__()
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, n_b))
         self.a_coeff = Parameter(torch.zeros(out_channels, in_channels, n_a))
         self.out_channels = out_channels
@@ -56,7 +56,7 @@ class LinearMimo(torch.nn.Module):
             u_d[..., 0:self.n_k, :] = 0.0
         else:
             u_d = u_in
-        return LinearMimoFunction.apply(self.b_coeff, self.a_coeff, u_d, y_0, u_0)
+        return MimoLinearDynamicOperatorFun.apply(self.b_coeff, self.a_coeff, u_d, y_0, u_0)
 
     def get_filtdata(self):
         r"""Returns the numerator and denominator coefficients of the transfer function :math:`q^{-1}`-polynomials.
@@ -138,8 +138,8 @@ class LinearMimo(torch.nn.Module):
 
 
 # SISO is implemented as a sub-case of MIMO
-class LinearSiso(LinearMimo):
-    r"""Applies a Dynamical Linear MIMO system to an input signal.
+class SisoLinearDynamicOperator(MimoLinearDynamicOperator):
+    r"""Applies a Dynamical Linear SISO system to an input signal.
 
     Args:
         n_b (int): Number of learnable coefficients of the transfer function numerator
@@ -157,25 +157,25 @@ class LinearSiso(LinearMimo):
     Examples::
 
         >>> n_b, n_a = 2, 2
-        >>> G = LinearSiso(b_coeff, a_coeff)
+        >>> G = SisoLinearDynamicOperator(b_coeff, a_coeff)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len))
         >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, 1)
     """
 
     def __init__(self, n_b, n_a, n_k=0):
-        super(LinearSiso, self).__init__(1, 1, n_b=n_b, n_a=n_a, n_k=n_k)
+        super(SisoLinearDynamicOperator, self).__init__(1, 1, n_b=n_b, n_a=n_a, n_k=n_k)
 
     def get_filtdata(self):
-        b_seq, a_seq = super(LinearSiso, self).__get_filtdata__()  # MIMO numden
+        b_seq, a_seq = super(SisoLinearDynamicOperator, self).__get_filtdata__()  # MIMO numden
         return b_seq[0, 0, :], a_seq[0, 0, :]
 
     def get_tfdata(self):
-        num, den = super(LinearSiso, self).__get_tfdata__()  # MIMO numden
+        num, den = super(SisoLinearDynamicOperator, self).__get_tfdata__()  # MIMO numden
         return num[0, 0, :], den[0, 0, :]
 
 
-class LinearMimoFir(torch.nn.Module):
+class MimoFirLinearDynamicOperator(torch.nn.Module):
     r"""Applies a Linear MIMO FIR filter to an input signal.
 
     Args:
@@ -194,14 +194,14 @@ class LinearMimoFir(torch.nn.Module):
 
         >>> in_channels, out_channels = 2, 4
         >>> n_b = 128
-        >>> G = LinearMimo(in_channels, out_channels, n_b)
+        >>> G = MimoLinearDynamicOperator(in_channels, out_channels, n_b)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len, in_channels))
         >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, out_channels)
     """
 
     def __init__(self, in_channels, out_channels, n_b, channels_last=True):
-        super(LinearMimoFir, self).__init__()
+        super(MimoFirLinearDynamicOperator, self).__init__()
         self.G = torch.nn.Conv1d(in_channels, out_channels, kernel_size=n_b, bias=False, padding=n_b-1)
         #self.b_coeff = self.G.weight
         self.n_a = 0
@@ -261,7 +261,7 @@ class LinearMimoFir(torch.nn.Module):
         return b_coeff_np, a_coeff_np
 
 
-class LinearSisoFir(LinearMimoFir):
+class SisoFirLinearDynamicOperator(MimoFirLinearDynamicOperator):
     r"""Applies a Linear SISO FIR filter to an input signal.
 
     Args:
@@ -277,26 +277,26 @@ class LinearSisoFir(LinearMimoFir):
     Examples::
 
         >>> n_b = 128
-        >>> G = LinearSisoFir(n_b)
+        >>> G = SisoFirLinearDynamicOperator(n_b)
         >>> batch_size, seq_len = 32, 100
         >>> u_in = torch.ones((batch_size, seq_len, 1))
         >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, 1)
     """
     def __init__(self, n_b, channels_last=True):
-        super(LinearSisoFir, self).__init__(1, 1, n_b, channels_last=channels_last)
+        super(SisoFirLinearDynamicOperator, self).__init__(1, 1, n_b, channels_last=channels_last)
 
     def get_filtdata(self):
-        b_seq, a_seq = super(LinearSisoFir, self).__get_filtdata__() # call to MIMO ba
+        b_seq, a_seq = super(SisoFirLinearDynamicOperator, self).__get_filtdata__() # call to MIMO ba
         return b_seq[0, 0, :], a_seq[0, 0, :]
 
     def get_tfdata(self):
-        num, den = super(LinearSisoFir, self).__get_tfdata__() # call to MIMO numden
+        num, den = super(SisoFirLinearDynamicOperator, self).__get_tfdata__() # call to MIMO numden
         return num[0, 0, :], den[0, 0, :]
 
 
-class LinearSecondOrderMimo(torch.nn.Module):
+class MimoSecondOrderDynamicOperator(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
-        super(LinearSecondOrderMimo, self).__init__()
+        super(MimoSecondOrderDynamicOperator, self).__init__()
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 2))
         self.rho = Parameter(torch.zeros(out_channels, in_channels, 1))
         self.psi = Parameter(torch.zeros((out_channels, in_channels, 1)))
@@ -311,9 +311,9 @@ class LinearSecondOrderMimo(torch.nn.Module):
         a_1 = -2 * r * torch.cos(theta)
         a_2 = r ** 2
         a_coeff = torch.cat((a_1, a_2), dim=-1)
-        return LinearMimoFunction.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
+        return MimoLinearDynamicOperatorFun.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
 
 
-class LinearSecondOrderSiso(LinearSecondOrderMimo):
+class SisoSecondOrderDynamicOperator(MimoSecondOrderDynamicOperator):
     def __init__(self):
-        super(LinearSecondOrderSiso, self).__init__(1, 1) # in_channels, out_channels, n_b, n_a
+        super(SisoSecondOrderDynamicOperator, self).__init__(1, 1) # in_channels, out_channels, n_b, n_a

@@ -4,8 +4,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin
 
 
 # Good results, but a bit slow...
@@ -61,11 +61,11 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Model blocks
-    G1 = LinearMimo(1, 8, n_b=3, n_a=3, n_k=1)
-    F1 = StaticMimoNonLin(8, 4, n_hidden=10, activation='tanh')  # torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearMimo(4, 4, n_b=3, n_a=3)
-    F2 = StaticMimoNonLin(4, 1, n_hidden=10, activation='tanh')
-    G3 = LinearMimo(1, 1, n_b=2, n_a=2, n_k=1) # was 2!
+    G1 = MimoLinearDynamicOperator(1, 8, n_b=3, n_a=3, n_k=1)
+    F1 = MimoStaticNonLin(8, 4, n_hidden=10, activation='tanh')  # torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = MimoLinearDynamicOperator(4, 4, n_b=3, n_a=3)
+    F2 = MimoStaticNonLin(4, 1, n_hidden=10, activation='tanh')
+    G3 = MimoLinearDynamicOperator(1, 1, n_b=2, n_a=2, n_k=1) # was 2!
 
     # Model structure
     def model(u_in):

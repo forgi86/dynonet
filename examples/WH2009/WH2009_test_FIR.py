@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearSisoFir
-from torchid.module.static import StaticSisoNonLin
+from torchid.module.lti import SisoFirLinearDynamicOperator
+from torchid.module.static import SisoStaticNonLin
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -47,9 +47,9 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Create models
-    G1 = LinearSisoFir(n_b=n_b)
-    G2 = LinearSisoFir(n_b=n_b)
-    F_nl = StaticSisoNonLin()
+    G1 = SisoFirLinearDynamicOperator(n_b=n_b)
+    G2 = SisoFirLinearDynamicOperator(n_b=n_b)
+    F_nl = SisoStaticNonLin()
 
     model_folder = os.path.join("models", model_name)
     # Create model parameters

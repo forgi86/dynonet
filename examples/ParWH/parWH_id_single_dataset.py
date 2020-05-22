@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import torch
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import torch.nn as nn
 
 import matplotlib.pyplot as plt
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     na_1 = 3
     y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
     u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
-    G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
+    G1 = MimoLinearDynamicOperator(in_channels_1, out_channels_1, nb_1, na_1)
 
     # Non-linear section
     F_nl = StaticNonLin()
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     na_2 = 3
     y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
     u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
-    G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
+    G2 = MimoLinearDynamicOperator(in_channels_2, out_channels_2, nb_2, na_2)
 
     # In[Initialize linear systems]
     with torch.no_grad():

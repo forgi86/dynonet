@@ -6,8 +6,8 @@ import time
 import matplotlib.pyplot as plt
 import scipy.io
 from examples.CR.common import CRSmallDataset
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin, StaticSisoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin, SisoStaticNonLin
 
 if __name__ == '__main__':
 
@@ -55,10 +55,10 @@ if __name__ == '__main__':
     na_1 = 3
     y0_1 = torch.zeros((batch_size, na_1), dtype=torch.float)
     u0_1 = torch.zeros((batch_size, nb_1), dtype=torch.float)
-    G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
+    G1 = MimoLinearDynamicOperator(in_channels_1, out_channels_1, nb_1, na_1)
 
     # Non-linear section
-    F_nl = StaticMimoNonLin(out_channels_1, 6)
+    F_nl = MimoStaticNonLin(out_channels_1, 6)
 
     # Second linear section
     in_channels_2 = 6
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     na_2 = 3
     y0_2 = torch.zeros((batch_size, na_2), dtype=torch.float)
     u0_2 = torch.zeros((batch_size, nb_2), dtype=torch.float)
-    G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
+    G2 = MimoLinearDynamicOperator(in_channels_2, out_channels_2, nb_2, na_2)
 
     # In[Setup optimizer]
     optimizer = torch.optim.Adam([

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import control
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import util.metrics
 
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     na_1 = 3
     y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
     u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
-    G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
+    G1 = MimoLinearDynamicOperator(in_channels_1, out_channels_1, nb_1, na_1)
     G1.load_state_dict(torch.load(os.path.join("../models", f"{model_filename}_G1.pkl")))
 
     # Non-linear section
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     na_2 = 3
     y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
     u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
-    G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
+    G2 = MimoLinearDynamicOperator(in_channels_2, out_channels_2, nb_2, na_2)
     G2.load_state_dict(torch.load(os.path.join("../models", f"{model_filename}_G2.pkl")))
 
     # In[Predict]

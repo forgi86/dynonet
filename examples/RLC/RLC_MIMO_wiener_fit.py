@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     u_0 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
 
-    G = LinearMimo(in_channels, out_channels, n_b, n_a)
+    G = MimoLinearDynamicOperator(in_channels, out_channels, n_b, n_a)
     nn_static = StaticNonLin()
 
     # Setup optimizer

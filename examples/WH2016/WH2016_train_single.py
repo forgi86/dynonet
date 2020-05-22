@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
 
     # In[Setup model]
-    G1 = LinearMimo(1, 1, n_b, n_a)
-    G2 = LinearMimo(1, 1, n_b, n_a)
+    G1 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
+    G2 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
 
     with torch.no_grad():
 

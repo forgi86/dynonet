@@ -1,5 +1,5 @@
 import torch
-from torchid.module.LTI import LinearMimo
+from torchid.module.lti import MimoLinearDynamicOperator
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     out_channels = 5
     batch_size = 32
     seq_len = 1024
-    G = LinearMimo(in_channels, out_channels, n_b, n_a, n_k=n_k)
+    G = MimoLinearDynamicOperator(in_channels, out_channels, n_b, n_a, n_k=n_k)
 
     # build first-order stable systems
     with torch.no_grad():
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # In[Test doc]
     in_channels, out_channels = 2, 4
     n_b, n_a, n_k = 2, 2, 1
-    G = LinearMimo(in_channels, out_channels, n_b, n_a, n_k)
+    G = MimoLinearDynamicOperator(in_channels, out_channels, n_b, n_a, n_k)
     batch_size, seq_len = 32, 100
     u_in = torch.ones((batch_size, seq_len, in_channels))
     y_out = G(u_in, y_0, u_0)  # shape:

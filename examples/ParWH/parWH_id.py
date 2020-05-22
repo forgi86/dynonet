@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import torch.utils.data
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin
 from examples.ParWH.common import ParallelWHDataset
 from tqdm import tqdm
 
@@ -60,17 +60,17 @@ if __name__ == '__main__':
     na_1 = 6
     y0_1 = torch.zeros((batch_size, na_1), dtype=torch.float)
     u0_1 = torch.zeros((batch_size, nb_1), dtype=torch.float)
-    G1 = LinearMimo(1, 2, n_b=nb_1, n_a=na_1)
+    G1 = MimoLinearDynamicOperator(1, 2, n_b=nb_1, n_a=na_1)
 
     # Non-linear section
-    F_nl = StaticMimoNonLin(2, 2)
+    F_nl = MimoStaticNonLin(2, 2)
 
     # Second linear section
     nb_2 = 6
     na_2 = 6
     y0_2 = torch.zeros((batch_size, na_2), dtype=torch.float)
     u0_2 = torch.zeros((batch_size, nb_2), dtype=torch.float)
-    G2 = LinearMimo(2, 1, n_b=nb_2, n_a=na_2)
+    G2 = MimoLinearDynamicOperator(2, 1, n_b=nb_2, n_a=na_2)
 
 
     # In[Setup optimizer]

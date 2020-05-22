@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.LTI import LinearSiso
+from torchid.module.lti import SisoLinearDynamicOperator
 import matplotlib.pyplot as plt
 import pyro
 import pyro.distributions as dist
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     # In[Setup deterministic model]
 
-    G = LinearSiso(n_b, n_a)
+    G = SisoLinearDynamicOperator(n_b, n_a)
     #model_folder = os.path.join("models", 'IIR')
     #G.load_state_dict(torch.load(os.path.join(model_folder, "G.pkl")))
 

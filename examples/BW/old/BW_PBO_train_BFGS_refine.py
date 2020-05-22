@@ -4,8 +4,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin
 
 if __name__ == '__main__':
 
@@ -64,11 +64,11 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearMimo(1, 8, n_b, n_a)
-    F1 = StaticMimoNonLin(8, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = LinearMimo(4, 2, n_b, n_a)
-    F2 = StaticMimoNonLin(2, 1, n_hidden=10)
-    G3 = LinearMimo(1, 1, n_b, n_a)
+    G1 = MimoLinearDynamicOperator(1, 8, n_b, n_a)
+    F1 = MimoStaticNonLin(8, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    G2 = MimoLinearDynamicOperator(4, 2, n_b, n_a)
+    F2 = MimoStaticNonLin(2, 1, n_hidden=10)
+    G3 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
 
     model_folder = os.path.join("models", model_load_name)
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))

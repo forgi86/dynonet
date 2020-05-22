@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import h5py
-from torchid.module.LTI import LinearSiso
-from torchid.module.static import StaticSisoNonLin
+from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.static import SisoStaticNonLin
 import time
 
 if __name__ == '__main__':
@@ -41,8 +41,8 @@ if __name__ == '__main__':
     y_torch = torch.tensor(y, dtype=torch.float32)
 
     # In[Deterministic model]
-    G = LinearSiso(n_b, n_a, n_k=n_k)
-    F = StaticSisoNonLin(n_hidden=10)
+    G = SisoLinearDynamicOperator(n_b, n_a, n_k=n_k)
+    F = SisoStaticNonLin(n_hidden=10)
 
     # In[Log-likelihood]
 

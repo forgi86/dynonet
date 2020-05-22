@@ -5,8 +5,8 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import time
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticSisoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import SisoStaticNonLin
 
 if __name__ == '__main__':
 
@@ -54,11 +54,11 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Second-order dynamical system
-    G1 = LinearMimo(1, 1, n_b, n_a)
-    G2 = LinearMimo(1, 1, n_b, n_a)
+    G1 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
+    G2 = MimoLinearDynamicOperator(1, 1, n_b, n_a)
 
     # Static sandwitched non-linearity
-    F_nl = StaticSisoNonLin()
+    F_nl = SisoStaticNonLin()
 
     # Setup optimizer
     optimizer = torch.optim.Adam([

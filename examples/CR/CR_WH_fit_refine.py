@@ -5,8 +5,8 @@ import time
 import matplotlib.pyplot as plt
 import scipy.io
 from examples.CR.common import CRSmallDataset
-from torchid.module.LTI import LinearMimo
-from torchid.module.static import StaticMimoNonLin, StaticSisoNonLin
+from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.static import MimoStaticNonLin, SisoStaticNonLin
 
 import util.metrics
 
@@ -71,17 +71,17 @@ if __name__ == '__main__':
     out_channels_1 = 3
     nb_1 = 2
     na_1 = 2
-    G1 = LinearMimo(in_channels_1, out_channels_1, nb_1, na_1)
+    G1 = MimoLinearDynamicOperator(in_channels_1, out_channels_1, nb_1, na_1)
 
     # Static non-linearity
-    F1 = StaticMimoNonLin(out_channels_1, 3)
+    F1 = MimoStaticNonLin(out_channels_1, 3)
 
     # Second linear model
     in_channels_2 = 3
     out_channels_2 = 1
     nb_2 = 2
     na_2 = 2
-    G2 = LinearMimo(in_channels_2, out_channels_2, nb_2, na_2)
+    G2 = MimoLinearDynamicOperator(in_channels_2, out_channels_2, nb_2, na_2)
 
     # Save initial parameters (if available)
     if model_load_name is not None:
