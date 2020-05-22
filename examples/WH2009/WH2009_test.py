@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
     # In[Settings]
-    model_name = 'model_WH_v1'
+    model_name = 'model_WH'
 
     # Settings
     n_b = 8

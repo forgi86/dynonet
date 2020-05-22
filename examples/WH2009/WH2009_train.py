@@ -30,7 +30,7 @@ if __name__ == '__main__':
     n_batch = 1
     n_b = 8
     n_a = 8
-    model_name = "model_WH_v1"
+    model_name = "model_WH"
 
     num_iter = num_iter_ADAM + num_iter_BFGS
 
@@ -54,7 +54,6 @@ if __name__ == '__main__':
     y_fit = y[0:n_fit:decimate]
     u_fit = u[0:n_fit:decimate]
     t_fit = t[0:n_fit:decimate]
-
 
     # In[Prepare training tensors]
     u_fit_torch = torch.tensor(u_fit[None, :, :], dtype=torch.float, requires_grad=False)
