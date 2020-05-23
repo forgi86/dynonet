@@ -3,7 +3,7 @@ import numpy as np
 import os
 import torch.utils.data
 from torchid.module.lti import MimoLinearDynamicOperator
-from torchid.module.static import MimoStaticNonLin
+from torchid.module.static import MimoStaticNonLinearity
 from examples.ParWH.common import ParallelWHDataset
 from tqdm import tqdm
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     G1 = MimoLinearDynamicOperator(1, 2, n_b=nb_1, n_a=na_1)
 
     # Non-linear section
-    F_nl = MimoStaticNonLin(2, 2)
+    F_nl = MimoStaticNonLinearity(2, 2)
 
     # Second linear section
     nb_2 = 6

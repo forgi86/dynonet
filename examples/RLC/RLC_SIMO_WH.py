@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.lti import MimoLinearDynamicOperator
-from torchid.module.static import MimoChannelWiseNonLin
+from torchid.module.static import MimoChannelWiseNonLinearity
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     y_meas_torch = torch.tensor(y_noise[None, :, :], dtype=torch.float)
     y_true_torch = torch.tensor(y_nonoise[None, :, :], dtype=torch.float)
     G1 = MimoLinearDynamicOperator(in_channels=1, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
-    nn_static = MimoChannelWiseNonLin(channels=2, n_hidden=10) #StaticChannelWiseNonLin(in_channels=2, out_channels=2, n_hidden=10)
+    nn_static = MimoChannelWiseNonLinearity(channels=2, n_hidden=10) #StaticChannelWiseNonLin(in_channels=2, out_channels=2, n_hidden=10)
     G2 = MimoLinearDynamicOperator(in_channels=2, out_channels=2, n_b=n_b, n_a=n_a, n_k=1)
 
     # Setup optimizer

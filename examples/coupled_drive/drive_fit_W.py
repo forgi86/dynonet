@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.lti import SisoLinearDynamicOperator
-from torchid.module.static import SisoStaticNonLin
+from torchid.module.static import SisoStaticNonLinearity
 import time
 import util.metrics
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     # In[Setup model]
     G1 = SisoLinearDynamicOperator(n_b=4, n_a=4, n_k=1)
-    F = SisoStaticNonLin(n_hidden=16, activation='tanh')
+    F = SisoStaticNonLinearity(n_hidden=16, activation='tanh')
     G2 = SisoLinearDynamicOperator(n_b=4, n_a=4, n_k=1)
 
     # Setup optimizer

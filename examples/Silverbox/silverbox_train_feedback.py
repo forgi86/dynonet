@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import time
 from torchid.module.lti import SisoLinearDynamicOperator
-from torchid.module.static import SisoStaticNonLin
+from torchid.module.static import SisoStaticNonLinearity
 import util.metrics
 
 if __name__ == '__main__':
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # In[First dynamical system custom defined]
     G1 = SisoLinearDynamicOperator(n_b, n_a, n_k)
     # Static non-linearity
-    F_nl = SisoStaticNonLin()
+    F_nl = SisoStaticNonLinearity()
 
     # Setup optimizer
     optimizer = torch.optim.Adam([

@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.lti import MimoLinearDynamicOperator
-from torchid.module.static import MimoStaticNonLin
+from torchid.module.static import MimoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
 import util.metrics
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         G2.b_coeff[:] = torch.randn((1, 1, n_a))*0.01
 
     # Static sandwitched non-linearity
-    F1 = MimoStaticNonLin(in_channels=1, out_channels=1)
+    F1 = MimoStaticNonLinearity(in_channels=1, out_channels=1)
 
     # In[Setup optimizer]
     optimizer = torch.optim.Adam([

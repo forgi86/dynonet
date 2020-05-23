@@ -10,7 +10,7 @@ import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
 from torchid.module.lti import MimoLinearDynamicOperator, SisoLinearDynamicOperator
-from torchid.module.static import MimoStaticNonLin, MimoStaticNonLin
+from torchid.module.static import MimoStaticNonLinearity, MimoStaticNonLinearity
 
 if __name__ == '__main__':
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # Model blocks
     G1 = MimoLinearDynamicOperator(1, 10, n_b=2, n_a=2, n_k=1)
     # Static sandwitched non-linearity
-    F1 = MimoStaticNonLin(10, 5, activation='tanh')
+    F1 = MimoStaticNonLinearity(10, 5, activation='tanh')
     G2 = MimoLinearDynamicOperator(5, 1, n_b=2, n_a=2, n_k=0)
 
     # Model structure

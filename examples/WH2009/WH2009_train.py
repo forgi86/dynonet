@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.lti import SisoLinearDynamicOperator
-from torchid.module.static import SisoStaticNonLin
+from torchid.module.static import SisoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # In[Prepare model]
     G1 = SisoLinearDynamicOperator(n_b, n_a, n_k=1)
-    F_nl = SisoStaticNonLin(n_hidden=10, activation='tanh')
+    F_nl = SisoStaticNonLinearity(n_hidden=10, activation='tanh')
     G2 = SisoLinearDynamicOperator(n_b, n_a)
 
     def model(u_in):

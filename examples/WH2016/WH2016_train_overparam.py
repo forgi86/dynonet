@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from torchid.module.lti import MimoLinearDynamicOperator
-from torchid.module.static import MimoStaticNonLin
+from torchid.module.static import MimoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
 import util.metrics
@@ -69,9 +69,9 @@ if __name__ == '__main__':
     # In[Setup model]
     # Second-order dynamical system
     G1 = MimoLinearDynamicOperator(1, 4, n_b, n_a, n_k=0)
-    F1 = MimoStaticNonLin(4, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    F1 = MimoStaticNonLinearity(4, 4, n_hidden=10) #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
     G2 = MimoLinearDynamicOperator(4, 2, n_b, n_a, n_k=0)
-    F2 = MimoStaticNonLin(2, 1, n_hidden=10)
+    F2 = MimoStaticNonLinearity(2, 1, n_hidden=10)
     G3 = MimoLinearDynamicOperator(1, 1, n_b, n_a, n_k=0)
 
 

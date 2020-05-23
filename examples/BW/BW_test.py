@@ -6,7 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from torchid.module.lti import MimoLinearDynamicOperator
 import util.metrics
-from torchid.module.static import MimoStaticNonLin
+from torchid.module.static import MimoStaticNonLinearity
 
 if __name__ == '__main__':
 
@@ -55,9 +55,9 @@ if __name__ == '__main__':
 
     # Model blocks
     G1 = MimoLinearDynamicOperator(1, 8, n_b=3, n_a=3, n_k=1)
-    F1 = MimoStaticNonLin(8, 4, n_hidden=10)  #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
+    F1 = MimoStaticNonLinearity(8, 4, n_hidden=10)  #torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
     G2 = MimoLinearDynamicOperator(4, 4, n_b=3, n_a=3)
-    F2 = MimoStaticNonLin(4, 1, n_hidden=10)
+    F2 = MimoStaticNonLinearity(4, 1, n_hidden=10)
     G3 = MimoLinearDynamicOperator(1, 1, n_b=2, n_a=2, n_k=1)
 
     # Load identified model parameters

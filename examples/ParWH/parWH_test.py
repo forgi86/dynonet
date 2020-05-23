@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import control
 from torchid.module.lti import MimoLinearDynamicOperator
-from torchid.module.static import MimoStaticNonLin
+from torchid.module.static import MimoStaticNonLinearity
 import util.metrics
 
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
 
     # Non-linear section
-    F_nl = MimoStaticNonLin(2, 2)
+    F_nl = MimoStaticNonLinearity(2, 2)
     F_nl.load_state_dict(torch.load(os.path.join(model_folder, "F_nl.pkl")))
 
     # Second linear section

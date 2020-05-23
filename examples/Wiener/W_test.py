@@ -8,7 +8,7 @@ import pandas as pd
 import os
 import h5py
 from torchid.module.lti import SisoLinearDynamicOperator
-from torchid.module.static import SisoStaticNonLin
+from torchid.module.static import SisoStaticNonLinearity
 import time
 
 if __name__ == '__main__':
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # In[Deterministic model]
     G = SisoLinearDynamicOperator(n_b, n_a, n_k=n_k)
-    F = SisoStaticNonLin(n_hidden=10)
+    F = SisoStaticNonLinearity(n_hidden=10)
     model_folder = os.path.join("models", model_name)
     G.load_state_dict(torch.load(os.path.join(model_folder, "G.pkl")))
     F.load_state_dict(torch.load(os.path.join(model_folder, "F.pkl")))

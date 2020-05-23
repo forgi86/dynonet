@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import h5py
 from torchid.module.lti import SisoLinearDynamicOperator
-from torchid.module.static import SisoStaticNonLin
+from torchid.module.static import SisoStaticNonLinearity
 import time
 
 
