@@ -12,27 +12,26 @@ import util.metrics
 
 if __name__ == '__main__':
 
+
     matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+    matplotlib.rc('text', usetex=True)
+
     # In[Set seed for reproducibility]
     np.random.seed(0)
     torch.manual_seed(0)
 
-    # In[]
-    lr = 1e-4
-    num_iter = 50000
-    msg_freq = 100
+    # In[Settings]
+
     model_name = 'EMPS_model'
+    dataset = 'test'
+    if dataset == 'id':
+        dataset_filename = 'DATA_EMPS.mat'
+    elif dataset == 'test':
+        dataset_filename = 'DATA_EMPS_PULSES.mat'
 
     # In[Load dataset]
-    matplotlib.rc('text', usetex=True)
-    dataset = 'test'
 
-    if dataset == 'id':
-        dataset_filename = 'DATA_EMPS_SC.csv'  # used for identification
-    elif dataset == 'test':
-        dataset_filename = 'DATA_EMPS_PULSES_SC.csv'  # used for test
-
-    emps_data = sp.io.loadmat(os.path.join("data", "DATA_EMPS.mat"))
+    emps_data = sp.io.loadmat(os.path.join("data", 'DATA_EMPS.mat'))
     y_ref = emps_data['qg'].astype(np.float32)
     y_meas = emps_data['qm'].astype(np.float32)
     u_in = emps_data['vir'].astype(np.float32)

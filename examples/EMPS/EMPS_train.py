@@ -4,9 +4,7 @@ import os
 import numpy as np
 import scipy as sp
 import scipy.io
-import scipy.signal
 import torch
-import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
 from torchid.module.lti import MimoLinearDynamicOperator, SisoLinearDynamicOperator
