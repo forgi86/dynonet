@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import torch.utils.data
-from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.lti import MimoLinearDynamicalOperator
 from torchid.module.static import MimoStaticNonLinearity
 from examples.ParWH.common import ParallelWHDataset
 from tqdm import tqdm
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     na_1 = 6
     y0_1 = torch.zeros((batch_size, na_1), dtype=torch.float)
     u0_1 = torch.zeros((batch_size, nb_1), dtype=torch.float)
-    G1 = MimoLinearDynamicOperator(1, 2, n_b=nb_1, n_a=na_1)
+    G1 = MimoLinearDynamicalOperator(1, 2, n_b=nb_1, n_a=na_1)
 
     # Non-linear section
     F_nl = MimoStaticNonLinearity(2, 2)
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     na_2 = 6
     y0_2 = torch.zeros((batch_size, na_2), dtype=torch.float)
     u0_2 = torch.zeros((batch_size, nb_2), dtype=torch.float)
-    G2 = MimoLinearDynamicOperator(2, 1, n_b=nb_2, n_a=na_2)
+    G2 = MimoLinearDynamicalOperator(2, 1, n_b=nb_2, n_a=na_2)
 
 
     # In[Setup optimizer]

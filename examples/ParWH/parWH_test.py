@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import control
-from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.lti import MimoLinearDynamicalOperator
 from torchid.module.static import MimoStaticNonLinearity
 import util.metrics
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     na_1 = 6
     y0_1 = torch.zeros((n_batch, na_1), dtype=torch.float)
     u0_1 = torch.zeros((n_batch, nb_1), dtype=torch.float)
-    G1 = MimoLinearDynamicOperator(in_channels_1, out_channels_1, nb_1, na_1)
+    G1 = MimoLinearDynamicalOperator(in_channels_1, out_channels_1, nb_1, na_1)
     G1.load_state_dict(torch.load(os.path.join(model_folder, "G1.pkl")))
 
     # Non-linear section
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     na_2 = 6
     y0_2 = torch.zeros((n_batch, na_2), dtype=torch.float)
     u0_2 = torch.zeros((n_batch, nb_2), dtype=torch.float)
-    G2 = MimoLinearDynamicOperator(in_channels_2, out_channels_2, nb_2, na_2)
+    G2 = MimoLinearDynamicalOperator(in_channels_2, out_channels_2, nb_2, na_2)
     G2.load_state_dict(torch.load(os.path.join(model_folder, "G2.pkl")))
 
     # In[Predict]

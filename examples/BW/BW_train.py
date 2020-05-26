@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.lti import MimoLinearDynamicOperator
+from torchid.module.lti import MimoLinearDynamicalOperator
 from torchid.module.static import MimoStaticNonLinearity
 
 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     num_iter = num_iter_ADAM + num_iter_BFGS
     # In[Load dataset]
 
-    h5_data = h5py.File(os.path.join("BoucWenFiles", "Test signals", h5_filename), 'r')
+    h5_data = h5py.File(os.path.join("data", "Test signals", h5_filename), 'r')
     dataset_list = h5_data.keys()
     y = np.array(h5_data[signal_name]['y']).transpose()  # MATLAB saves data in column major order...
     if y.ndim == 2:
@@ -61,11 +61,11 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Model blocks
-    G1 = MimoLinearDynamicOperator(1, 8, n_b=3, n_a=3, n_k=1)
+    G1 = MimoLinearDynamicalOperator(1, 8, n_b=3, n_a=3, n_k=1)
     F1 = MimoStaticNonLinearity(8, 4, n_hidden=10, activation='tanh')  # torch.nn.ReLU() #StaticMimoNonLin(3, 3, n_hidden=10)
-    G2 = MimoLinearDynamicOperator(4, 4, n_b=3, n_a=3)
+    G2 = MimoLinearDynamicalOperator(4, 4, n_b=3, n_a=3)
     F2 = MimoStaticNonLinearity(4, 1, n_hidden=10, activation='tanh')
-    G3 = MimoLinearDynamicOperator(1, 1, n_b=2, n_a=2, n_k=1) # was 2!
+    G3 = MimoLinearDynamicalOperator(1, 1, n_b=2, n_a=2, n_k=1) # was 2!
 
     # Model structure
     def model(u_in):

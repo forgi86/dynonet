@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoFirLinearDynamicOperator
+from torchid.module.lti import SisoFirLinearDynamicalOperator
 from torchid.module.static import SisoStaticNonLinearity
 
 import matplotlib as mpl
@@ -47,8 +47,8 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Create models
-    G1 = SisoFirLinearDynamicOperator(n_b=n_b)
-    G2 = SisoFirLinearDynamicOperator(n_b=n_b)
+    G1 = SisoFirLinearDynamicalOperator(n_b=n_b)
+    G2 = SisoFirLinearDynamicalOperator(n_b=n_b)
     F_nl = SisoStaticNonLinearity()
 
     model_folder = os.path.join("models", model_name)

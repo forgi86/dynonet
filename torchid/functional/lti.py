@@ -5,42 +5,20 @@ import scipy.signal
 from util.filtering import lfilter_mimo_components
 
 
-class MimoLinearDynamicOperatorFun(torch.autograd.Function):
-    r"""Applies a linear second-order filter to the incoming data: :math:`y = G(u)`
-
-    Args:
-        in_features: size of each input sample
-        out_features: size of each output sample
-        bias: If set to ``False``, the layer will not learn an additive bias.
-            Default: ``True``
-
-    Shape:
-        - Input: :math:`(N, *, H_{in})` where :math:`*` means any number of
-          additional dimensions and :math:`H_{in} = \text{in\_features}`
-        - Output: :math:`(N, *, H_{out})` where all but the last dimension
-          are the same shape as the input and :math:`H_{out} = \text{out\_features}`.
-
-    Attributes:
-        weight: the learnable weights of the module of shape
-            :math:`(\text{out\_features}, \text{in\_features})`. The values are
-            initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`, where
-            :math:`k = \frac{1}{\text{in\_features}}`
-        bias:   the learnable bias of the module of shape :math:`(\text{out\_features})`.
-                If :attr:`bias` is ``True``, the values are initialized from
-                :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
-                :math:`k = \frac{1}{\text{in\_features}}`
+class MimoLinearDynamicalOperatorFun(torch.autograd.Function):
+    r"""Applies a multi-input-multi-output linear dynamical filtering operation: :math:`y = G(u)`.
 
     Examples::
 
-        >>> G = MimoLinearDynamicOperatorFun.apply
+        >>> G = MimoLinearDynamicalOperatorFun.apply
         >>> n_b = 2
-        >>> n_f = 2
+        >>> n_a = 2
         >>> N = 500
-        >>> y_0 = torch.zeros(n_f, dtype=torch.double)
+        >>> y_0 = torch.zeros(n_a, dtype=torch.double)
         >>> u_0 = torch.zeros(n_b, dtype=torch.double)
         >>> b_coeff = torch.tensor([0.0706464146944544, 0], dtype=torch.double, requires_grad=True)  # b_1, b_2
-        >>> f_coeff = torch.tensor([-1.87212998940304, 0.942776404097492], dtype=torch.double, requires_grad=True)  # f_1, f_2
-        >>> inputs = (b_coeff, f_coeff, u_in, y_0, u_0)
+        >>> a_coeff = torch.tensor([-1.872112998940304, 0.942776404097492], dtype=torch.double, requires_grad=True)  # f_1, f_2
+        >>> inputs = (b_coeff, a_coeff, u_in, y_0, u_0)
         >>> Y = G(*inputs)
         >>> print(Y.size())
         torch.Size([500, 1])
@@ -126,7 +104,7 @@ class MimoLinearDynamicOperatorFun(torch.autograd.Function):
             for idx_coeff in range(1, n_b):
                 sens_b[:, idx_coeff:, :, :, idx_coeff] = sens_b[:, :-idx_coeff, :, :, 0]
             sens_b = torch.as_tensor(sens_b)
-            grad_b = torch.einsum('bto,btoid->oid', grad_output, sens_b)
+            grad_b = torch.einsum('bto,btoid->oid', grad_output, sens_b)  # einstein summation
 
         if ctx.needs_input_grad[1]:  # a_coeff
             # compute forward sensitivities w.r.t. the f_i parameters
@@ -196,7 +174,7 @@ if __name__ == '__main__':
 
     b_coeff = torch.tensor(np.random.randn(*(out_ch, in_ch, n_b)), requires_grad=True)
     a_coeff = torch.tensor(np.random.rand(*(out_ch, in_ch, n_a)), requires_grad=True)
-    G = MimoLinearDynamicOperatorFun.apply
+    G = MimoLinearDynamicalOperatorFun.apply
     y_0 = torch.tensor(0*np.random.randn(*(out_ch, in_ch, n_a)))
     u_0 = torch.tensor(0*np.random.randn(*(out_ch, in_ch, n_b)))
     u_in = torch.tensor(1*np.random.randn(*(batch_size, seq_len, in_ch)), requires_grad=True)

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     signal_name = 'multisine'
     #signal_name = 'sinesweep' # available in test
 
-    h5_data = h5py.File(os.path.join("BoucWenFiles", "Test signals", h5_filename), 'r')
+    h5_data = h5py.File(os.path.join("data", "Test signals", h5_filename), 'r')
     dataset_list = h5_data.keys()
     y = np.array(h5_data[signal_name]['y']).transpose()  # MATLAB saves data in column major order...
     if y.ndim == 2:

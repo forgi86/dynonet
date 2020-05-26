@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 import os
 import h5py
-from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.lti import SisoLinearDynamicalOperator
 from torchid.module.static import SisoStaticNonLinearity
 import time
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     y_torch = torch.tensor(y, dtype=torch.float32)
 
     # In[Deterministic model]
-    G = SisoLinearDynamicOperator(n_b, n_a, n_k=n_k)
+    G = SisoLinearDynamicalOperator(n_b, n_a, n_k=n_k)
     F = SisoStaticNonLinearity(n_hidden=10)
 
     # In[Log-likelihood]

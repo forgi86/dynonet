@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoFirLinearDynamicOperator
+from torchid.module.lti import SisoFirLinearDynamicalOperator
 from torchid.module.static import SisoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
@@ -58,9 +58,9 @@ if __name__ == '__main__':
     y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
 
     # In[Prepare model]
-    G1 = SisoFirLinearDynamicOperator(n_b=n_b)
+    G1 = SisoFirLinearDynamicalOperator(n_b=n_b)
     F_nl = SisoStaticNonLinearity()
-    G2 = SisoFirLinearDynamicOperator(n_b=n_b)
+    G2 = SisoFirLinearDynamicalOperator(n_b=n_b)
 
     def model(u_in):
         y1_lin = G1(u_fit_torch)

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.lti import SisoLinearDynamicalOperator
 from torchid.module.static import SisoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     u_torch = torch.tensor(u[None, :, :], dtype=torch.float, requires_grad=False)
     y_meas_torch = torch.tensor(y_noise[None, :, :], dtype=torch.float)
     y_true_torch = torch.tensor(y_nonoise[None, :, :], dtype=torch.float)
-    G = SisoLinearDynamicOperator(n_b, n_a, n_k=1)
+    G = SisoLinearDynamicalOperator(n_b, n_a, n_k=1)
     nn_static = SisoStaticNonLinearity()
 
     # Setup optimizer

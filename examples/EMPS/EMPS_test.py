@@ -6,7 +6,7 @@ import scipy as sp
 import scipy.io
 import torch
 import matplotlib.pyplot as plt
-from torchid.module.lti import MimoLinearDynamicOperator, SisoLinearDynamicOperator
+from torchid.module.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
 from torchid.module.static import MimoStaticNonLinearity, MimoStaticNonLinearity
 import util.metrics
 
@@ -46,10 +46,10 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Model blocks
-    G1 = MimoLinearDynamicOperator(1, 10, n_b=2, n_a=2, n_k=1)
+    G1 = MimoLinearDynamicalOperator(1, 10, n_b=2, n_a=2, n_k=1)
     # Static sandwitched non-linearity
     F1 = MimoStaticNonLinearity(10, 5, activation='tanh')
-    G2 = MimoLinearDynamicOperator(5, 1, n_b=2, n_a=2, n_k=0)
+    G2 = MimoLinearDynamicalOperator(5, 1, n_b=2, n_a=2, n_k=0)
 
     # Load identified model parameters
     model_folder = os.path.join("models", model_name)
@@ -106,9 +106,9 @@ if __name__ == '__main__':
     len_plot = 400
 
     plt.figure(figsize=(4, 3))
-    plt.plot(time_exp, y_meas, 'k', label='$y_{\mathrm{meas}}$')
-    plt.plot(time_exp, y_hat, 'b', label='$y$')
-    plt.plot(time_exp, y_meas - y_hat, 'r', label='$e$')
+    plt.plot(time_exp, y_meas, 'k', label='$\mathbf{y}^{\mathrm{meas}}$')
+    plt.plot(time_exp, y_hat, 'b', label='$\mathbf{y}$')
+    plt.plot(time_exp, y_meas - y_hat, 'r', label='$\mathbf{e}$')
     plt.legend(loc='upper right')
     plt.grid(True)
     plt.ylabel("Position (m)")

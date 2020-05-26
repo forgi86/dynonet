@@ -1,10 +1,10 @@
-Torchid documentation
+dynoNet API
 ==========================
 ---------------
 LTI blocks
 ---------------
 
-.. automodule:: torchid.module.LTI
+.. automodule:: torchid.module.lti
    :members:
    :special-members:
    :member-order: bysource

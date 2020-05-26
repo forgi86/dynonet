@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoFirLinearDynamicOperator
+from torchid.module.lti import SisoFirLinearDynamicalOperator
 import matplotlib.pyplot as plt
 import time
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     y_true_torch = torch.tensor(y_nonoise[None, ...], dtype=torch.float)
 
     # In[Second-order dynamical system custom defined]
-    G = SisoFirLinearDynamicOperator(n_b)
+    G = SisoFirLinearDynamicalOperator(n_b)
 
 
     # In[Setup optimizer]

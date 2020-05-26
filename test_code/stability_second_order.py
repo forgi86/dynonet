@@ -16,11 +16,11 @@ if __name__ == '__main__':
     a2_stab_max = np.ones_like(a1)
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 4))
-    ax.plot(a1, a2_complex, 'k--')
     ax.plot(a1, a2_stab_min, 'k')
     ax.plot(a1, a2_stab_max, 'k')
     ax.fill_between(a1, a2_complex, a2_stab_max, facecolor='b', alpha=0.2,  label='stable complex conjugate poles')
     ax.fill_between(a1, a2_stab_min, a2_complex, label='stable real poles')
+    ax.plot(a1, a2_complex, 'k--', label='stable real coincident poles')
     ax.set_xlim([-2.5, 2.5])
     ax.set_ylim([-2.0, 1.5])
     ax.set_xlabel('$a_1$', fontsize=16)

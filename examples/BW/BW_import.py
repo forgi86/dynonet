@@ -16,9 +16,9 @@ if __name__ == '__main__':
     y_name = 'yval_' + signal_name
     y_filename = y_name + '.mat'
 
-    u = scipy.io.loadmat(os.path.join("BoucWenFiles", "Test signals", "Validation signals", u_filename))[u_name]\
+    u = scipy.io.loadmat(os.path.join("data", "Test signals", "Validation signals", u_filename))[u_name]\
         .reshape(1, -1)
-    y = scipy.io.loadmat(os.path.join("BoucWenFiles", "Test signals", "Validation signals", y_filename))[y_name]\
+    y = scipy.io.loadmat(os.path.join("data", "Test signals", "Validation signals", y_filename))[y_name]\
         .reshape(1, -1)
 
     fs = np.array([750.0])
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     # In[Save in an hdf file]
 
     # can only write a group once, delete file to re-write the same group
-    filename = os.path.join('BoucWenFiles', 'Test signals', 'test.h5')
+    filename = os.path.join('data', 'Test signals', 'test.h5')
     hf = h5py.File(filename, 'a')
     ds_signal = hf.create_group(signal_name)  # signal group
     ds_signal.create_dataset('y', data=y.transpose())

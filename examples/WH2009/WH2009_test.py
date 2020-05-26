@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoLinearDynamicOperator
+from torchid.module.lti import SisoLinearDynamicalOperator
 from torchid.module.static import SisoStaticNonLinearity
 
 import matplotlib
@@ -47,8 +47,8 @@ if __name__ == '__main__':
     # In[Instantiate models]
 
     # Create models
-    G1 = SisoLinearDynamicOperator(n_b=n_b, n_a=n_a, n_k=1)
-    G2 = SisoLinearDynamicOperator(n_b=n_b, n_a=n_a, n_k=0)
+    G1 = SisoLinearDynamicalOperator(n_b=n_b, n_a=n_a, n_k=1)
+    G2 = SisoLinearDynamicalOperator(n_b=n_b, n_a=n_a, n_k=0)
     F_nl = SisoStaticNonLinearity(n_hidden=10, activation='tanh')
 
     model_folder = os.path.join("models", model_name)
@@ -141,9 +141,9 @@ if __name__ == '__main__':
     len_plot = 1000
 
     plt.figure(figsize=(4, 3))
-    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot], 'k', label="$y^{\mathrm{meas}}$")
-    plt.plot(t[t_test_start:t_test_start+len_plot], y_hat[t_test_start:t_test_start+len_plot], 'b--', label="$y$")
-    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot] - y_hat[t_test_start:t_test_start+len_plot], 'r', label="$e$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot], 'k', label="$\mathbf{y}^{\mathrm{meas}}$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_hat[t_test_start:t_test_start+len_plot], 'b--', label="$\mathbf{y}$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot] - y_hat[t_test_start:t_test_start+len_plot], 'r', label="$\mathbf{e}$")
     plt.grid(True)
     plt.xlabel('Time (s)')
     plt.ylabel('Voltage (V)')
