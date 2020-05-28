@@ -6,7 +6,7 @@ import control.matlab
 import pandas as pd
 import os
 
-from test_code.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_mod
+from examples.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_mod
 
 if __name__ == '__main__':
 

@@ -36,9 +36,10 @@ if __name__ == '__main__':
 
 #    std_w = np.sqrt(var_w)
 #    std_e = np.sqrt(var_e)
-    model_name_load = 'NLS_nonoise'
-    model_name_save = 'ML_noise'
-    dataset_name = 'train'
+    model_name_load = 'NLS_noise'  # start from NLS fit
+    model_name_save = 'ML_noise'  # Refine with ML fit
+    dataset_name = 'train_noise'
+
     # In[Load data]
     filename = os.path.join('data', 'dataset.h5')
     h5_data = h5py.File(filename, 'r')
@@ -61,21 +62,22 @@ if __name__ == '__main__':
 
     # In[Deterministic model]
     G = SisoLinearDynamicalOperator(n_b, n_a, n_k=n_k)
-
-
-    #F = StaticSisoNonLin(n_hidden=10)
-    F = StaticNonLinPoly(n_p=3)
-    with torch.no_grad():
-        F.p_coeff[0] = 1.0
-        F.p_coeff[1] = 1.0
-        F.p_coeff[2] = 0.0
-
-    with torch.no_grad():
-        G.a_coeff[0, 0, 0] = 0.5
-        G.b_coeff[0, 0, 0] = 1.0
+    F = SisoStaticNonLinearity(n_hidden=10)
     model_folder = os.path.join("models", model_name_load)
-    #G.load_state_dict(torch.load(os.path.join(model_folder, "G.pkl")))
-    #F.load_state_dict(torch.load(os.path.join(model_folder, "F.pkl")))
+    G.load_state_dict(torch.load(os.path.join(model_folder, "G.pkl")))
+    F.load_state_dict(torch.load(os.path.join(model_folder, "F.pkl")))
+
+    #F = StaticNonLinPoly(n_p=3)
+    #with torch.no_grad():
+    #    F.p_coeff[0] = 1.0
+    #    F.p_coeff[1] = 1.0
+    #    F.p_coeff[2] = 0.0
+
+    #with torch.no_grad():
+    #    G.a_coeff[0, 0, 0] = 0.5
+    #    G.b_coeff[0, 0, 0] = 1.0
+
+
     # In[]
     with torch.no_grad():
         x0 = G(u_torch)
@@ -157,11 +159,15 @@ if __name__ == '__main__':
         y_nl = F(y_lin)
         y_hat = y_nl
 
+    y_lin = y_lin.numpy()
+    y_nl = y_nl.numpy()
+    y_hat = y_hat.numpy()
+
     # In[Predict]
     plt.figure()
-    plt.plot(y0[0, :, 0], 'k')
+    plt.plot(y[0, :, 0], 'k')
     plt.plot(y_hat[0, :, 0], 'g')
-    plt.plot(y0[0, :, 0] - y_hat[0, :, 0], 'r')
+    plt.plot(y[0, :, 0] - y_hat[0, :, 0], 'r')
 
     plt.figure()
     plt.plot(y_lin[0, :], y_hat[0, :], '*k', label='x')

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.old.linearsiso_TB import LinearDynamicalSystem
+from torchid.module.lti import SisoLinearDynamicalOperator
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     decimate = 1
     n_batch = 1
     n_b = 3
-    n_f = 3
+    n_a = 3
 
     # Column names in the dataset
     COL_U = ['V1']
@@ -70,15 +70,13 @@ if __name__ == '__main__':
     t_fit = t[0:n_fit:decimate]
 
     # Prepare data
-    u_fit_torch = torch.tensor(u_fit, dtype=torch.float, requires_grad=False)
-    y_fit_torch = torch.tensor(y_fit, dtype=torch.float)
+    u_fit_torch = torch.tensor(u_fit[None, :, :], dtype=torch.float, requires_grad=False)
+    y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
 
 
     # Second-order dynamical system custom defined
-    b1_coeff = np.array([0.1, 0.0], dtype=np.float32)  # b_0, b_1
-    f1_coeff = np.array([-0.9, 0.0], dtype=np.float32) # a_1, a_2
-    G1 = LinearDynamicalSystem(b1_coeff, f1_coeff)
-    y_init_1 = torch.zeros((n_batch, n_f), dtype=torch.float)
+    G1 = SisoLinearDynamicalOperator(n_b=n_b, n_a=n_a)
+    y_init_1 = torch.zeros((n_batch, n_a), dtype=torch.float)
     u_init_1 = torch.zeros((n_batch, n_b), dtype=torch.float)
 
     # Static non-linearity
@@ -124,8 +122,8 @@ if __name__ == '__main__':
 
     # In[To numpy]
 
-    y_hat = y_hat.detach().numpy()
-    y1_lin = y1_lin.detach().numpy()
+    y_hat = y_hat.detach().numpy()[0, :, :]
+    y1_lin = y1_lin.detach().numpy()[0, :, :]
 
     # In[Plot]
     plt.figure()

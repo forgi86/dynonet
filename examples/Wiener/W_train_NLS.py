@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     #model_name = 'ML_noise'
     model_name = 'NLS_noise'
-    dataset_name = 'train'
+    dataset_name = 'train_noise'
     # In[Load data]
     filename = os.path.join('data', 'dataset.h5')
     h5_data = h5py.File(filename, 'r')
