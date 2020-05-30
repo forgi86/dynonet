@@ -7,7 +7,7 @@ In this work, we introduce the linear dynamical operator as a differentiable lay
 The operator is parametrized as a rational transfer function and thus can represent an infinite impulse response (IIR)
 filtering operation, as opposed to the Convolutional layer of 1D-CNNs that is equivalent to finite impulse response (FIR) filtering.
 
-In the dynoNet architecture, linear dynamical G-blocks are combined with static (i.e., memoryless) non-linearities which can be either elementary
+In the dynoNet architecture, linear dynamical operators are combined with static (i.e., memoryless) non-linearities which can be either elementary
 activation functions applied channel-wise; fully connected feed-forward neural networks; or other differentiable operators. 
 
 # Folders:
