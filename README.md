@@ -1,6 +1,6 @@
-# dynoNet: a neural network architecture for learning of dynamical systems 
+# dynoNet: a neural network architecture for learning dynamical systems 
 
-This repository contains the Python code to reproduce the results of the paper "dynoNet: a neural network architecture for learning of dynamical systems"
+This repository contains the Python code to reproduce the results of the paper "dynoNet: a neural network architecture for learning dynamical systems"
 by Marco Forgione and Dario Piga.
 
 In this work, we introduce the linear dynamical operator as a differentiable layer compatible with back-propagation-based training. 
@@ -23,8 +23,8 @@ Three [examples](examples) discussed in the paper are:
 
 For the [WH2009](examples/WH2009) example, the main scripts are:
 
- *  ``WH2009_train.py``: Training of the dynoNet model on the training dataset
- *  ``WH2009_test.py``: Testing of the dynoNet model on the test dataset, computation of metrics.
+ *  ``WH2009_train.py``: Training of the dynoNet model
+ *  ``WH2009_test.py``: Evaluation of the dynoNet model on the test dataset,  computation of metrics.
   
 Similar scripts are provided for the other examples.
 
