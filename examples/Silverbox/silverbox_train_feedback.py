@@ -62,6 +62,14 @@ if __name__ == '__main__':
         {'params': [y_hidden_torch], 'lr': 1e-3},
     ], lr=lr)
 
+
+    # In[Structure]
+    #   u ---> ----> G ------> y_lin
+    #         |
+    #         |
+    #   y_nl  <----- F <------ y_hidden (= y_lin, enforced by loss_consistency)
+    #  The feedback loop is cut and the difference y_lin - y_hidden is penalized
+
     # In[Train]
     LOSS = []
     LOSS_FIT = []
