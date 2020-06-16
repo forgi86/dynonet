@@ -1,7 +1,6 @@
 import numpy as np
 import scipy as sp
 import scipy.signal
-import numba as nb
 from multiprocessing.pool import ThreadPool as Pool
 
 
