@@ -1,0 +1,93 @@
+% does not look nice, try deleting the line with the fontenc.
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage[latin1]{inputenc}
+\usepackage{units}
+\usepackage{colortbl}
+\usepackage{multimedia}
+\usepackage{bm}
+
+\mode<presentation>
+{
+  \usetheme{Boadilla}
+  \useoutertheme{infolines}
+  \setbeamercovered{transparent} 
+}
+
+\newcommand{\Name}{\emph{dynoNet}}
+
+\title[\Name]{\Name: a neural network architecture for learning dynamical systems}
+
+%\subtitle{Industrial-scale experimental results\\} % (optional)
+
+\author[]{Marco Forgione, Dario Piga}
+
+\institute[IDSIA]{
+	\inst{1}IDSIA Dalle Molle Institute for Artificial Intelligence SUPSI-USI, Lugano, Switzerland 
+	} 
+
+
+\date[]{\today}
+
+
+\subject{System identification with neural networks}
+
+
+%% MATH DEFINITIONS %%
+\newcommand{\q}{q} % shift operator
+\newcommand{\A}{A} % autoregressive polynomial
+\newcommand{\ac}{a} % autoregressive polynomial coefficient
+\newcommand{\B}{B} % exogenous polynomial
+\newcommand{\bb}{b} % exogenous polynomial coefficient
+\newcommand{\Gmat}{\mathbb{G}} % transfer function operator in matrix form
+\newcommand{\tvec}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\bm{#1}}
+\newcommand{\sens}[1]{\tilde{#1}}
+\newcommand{\adjoint}[1]{\overline{#1}}
+\newcommand{\loss}{\mathcal{L}}
+\newcommand{\pdiff}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\nsamp}{T}
+
+\newcommand{\conv}{*}
+\newcommand{\ccorr}{\star}
+%\newcommand{\R}{\mathcal{R}}
+%\newcommand{\du}{\delta u}
+%\newcommand{\dy}{\delta y}
+%\newcommand{\DU}{\Delta U}
+%\newcommand{\DY}{\Delta Y}
+%\newcommand{\abs}[1]{\left | #1 \right |}
+\newcommand{\norm}[1]{\left \lVert #1 \right \rVert}
+%\newcommand{\relphantom}[1]{\mathrel{\phantom{#1}}}
+%\newenvironment{matrixc}{\begin{array}{c}\left[}{\end{array}\right]}
+\DeclareMathOperator*\argmin{arg \, min}
+%\DeclareMathOperator*\argmax{arg \, max}
+%\DeclareMathOperator*\fit{fit}
+%\DeclareMathOperator*\RMSE{RMSE}
+%\DeclareMathOperator*\diag{diag}
+%\DeclareMathOperator*\diet{diet}
+%\DeclareMathOperator*\Risk{Risk}
+%\DeclareMathOperator*\Num{Num}
+%\DeclareMathOperator*\Den{Den}
+%\DeclareMathOperator*\Rat{Rat}
+\DeclareMathOperator*\cov{cov}
+%\DeclareMathOperator*\Var{Var}
+%\DeclareMathOperator*\SSR{SSR}
+%\setcounter{MaxMatrixCols}{20}
+%\newcommand{\pdiff}[2]{\frac{\partial #1}{\partial #2}}
+%\definecolor{mypink1}{rgb}{0.858, 0.188, 0.478}
+%\definecolor{olive}{RGB}{85, 107, 47}
+\definecolor{orange}{RGB}{204, 85, 0}
+
+%\definecolor{mypink3}{cmyk}{0, 0.7808, 0.4429, 0.1412}
+%\definecolor{mygray}{gray}{0.6}
+%\definecolor{olivegreen}[RGB]{85, 107, 47}
+
+\newcommand{\K}{K}
+\newcommand{\M}{M}
+\newcommand{\Mo}{M_o}
+\newcommand{\So}{S_o}
+\newcommand{\Smod}{S}
+\newcommand{\parcolor}[1]{{\color{orange}#1}}
+\newcommand{\Ts}{T_s^{\rm MPC}}
+\newcommand{\cites}[1]{\begin{small}(#1)\end{small}}
+%\newcommand{\Ts}{T_s}
