@@ -294,7 +294,7 @@ class SisoFirLinearDynamicalOperator(MimoFirLinearDynamicalOperator):
         return num[0, 0, :], den[0, 0, :]
 
 
-class MimoSecondOrderDynamicOperator(torch.nn.Module):
+class StableSecondOrderMimoLinearDynamicalOperator(torch.nn.Module):
     r"""Applies a stable second-order linear multi-input-multi-output filtering operation.
     The denominator of the transfer function is parametrized in terms of two complex conjugate poles with magnitude
     :math:: `r, 0 < r < 1` and phase :math:: `\beta, < 0 \beta < \pi`. In turn, :math:: `r` and :math:: `\beta` are
@@ -315,16 +315,17 @@ class MimoSecondOrderDynamicOperator(torch.nn.Module):
 
     Examples::
 
-        >>> n_b = 128
-        >>> G = SisoFirLinearDynamicalOperator(n_b)
+        >>> in_channels = 2
+        >>> out_channels = 4
+        >>> G = StableSecondOrderMimoLinearDynamicalOperator(in_channels, out_channels)
         >>> batch_size, seq_len = 32, 100
-        >>> u_in = torch.ones((batch_size, seq_len, 1))
+        >>> u_in = torch.ones((batch_size, seq_len, in_channels))
         >>> y_out = G(u_in, y_0, u_0) # shape: (batch_size, seq_len, 1)
 
     """
 
     def __init__(self, in_channels, out_channels):
-        super(MimoSecondOrderDynamicOperator, self).__init__()
+        super(StableSecondOrderMimoLinearDynamicalOperator, self).__init__()
         self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 2))
         self.rho = Parameter(torch.zeros(out_channels, in_channels, 1))
         self.psi = Parameter(torch.zeros((out_channels, in_channels, 1)))
@@ -342,7 +343,7 @@ class MimoSecondOrderDynamicOperator(torch.nn.Module):
         return MimoLinearDynamicalOperatorFun.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
 
 
-class SisoSecondOrderDynamicOperator(MimoSecondOrderDynamicOperator):
+class StableSecondOrderSisoLinearDynamicalOperator(StableSecondOrderMimoLinearDynamicalOperator):
     r"""Applies a stable second-order linear single-input-single-output filtering operation.
     The denominator of the transfer function is parametrized in terms of two complex conjugate poles with magnitude
     :math:: `r, 0 < r < 1` and phase :math:: `\beta, < 0 \beta < \pi`. In turn, :math:: `r` and :math:: `\beta` are
@@ -351,4 +352,4 @@ class SisoSecondOrderDynamicOperator(MimoSecondOrderDynamicOperator):
     """
 
     def __init__(self):
-        super(SisoSecondOrderDynamicOperator, self).__init__(1, 1) # in_channels, out_channels, n_b, n_a
+        super(StableSecondOrderSisoLinearDynamicalOperator, self).__init__(1, 1)  # in_channels, out_channels, n_b, n_a

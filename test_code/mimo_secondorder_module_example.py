@@ -1,5 +1,5 @@
 import torch
-from torchid.module.lti import MimoSecondOrderDynamicOperator
+from torchid.module.lti import StableSecondOrderMimoLinearDynamicalOperator
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,7 +14,7 @@ if __name__ == '__main__':
     out_channels = 5
     batch_size = 32
     seq_len = 1024
-    G = MimoSecondOrderDynamicOperator(in_channels, out_channels)
+    G = StableSecondOrderMimoLinearDynamicalOperator(in_channels, out_channels)
 
 
     y_0 = torch.tensor(0*np.random.randn(*(out_channels, in_channels, n_a)))

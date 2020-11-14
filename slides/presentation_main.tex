@@ -45,9 +45,9 @@ Two main classes of \structure{neural network} structures for sequence modeling 
  General state-space models
  \vskip 1em
     \begin{itemize}
-     \item General state-space models
      \item High representational capacity
-     \item Difficulties in training
+     \item Hard to parallelize
+     \item Numerical issues in training
     \end{itemize}
  \end{block}
 \column{.48\textwidth}
@@ -55,8 +55,8 @@ Two main classes of \structure{neural network} structures for sequence modeling 
   Dynamics through FIR blocks
   \vskip 1em
     \begin{itemize}
-     \item Lower capacity
-     \item Several parameters
+     \item Lower capacity, several params
+     \item Fully parallelizable
      \item Fast, well-behaved training
     \end{itemize}
 \end{block}
@@ -64,12 +64,13 @@ Two main classes of \structure{neural network} structures for sequence modeling 
 
 \pause
 \vskip 2em
-We introduce \Name\,: a neural network architecture using linear \structure{dynamical operators} (rational transfer functions) as  building blocks.
+We introduce \Name\,: an architecture using linear {dynamical operators} parametrized as 
+\structure{rational transfer functions} as  building blocks.
 \pause
 \vskip 1em
 \begin{itemize}
 \item Extends 1D Convolutional NNs to \structure{Infinite Impulse Response} dynamics
-\item Can be trained by plain \structure{back-propagation}
+\item Can be trained efficiently by plain \structure{back-propagation}
 \end{itemize}
 \end{frame}
 
@@ -101,23 +102,22 @@ We introduce \Name\,: a neural network architecture using linear \structure{dyna
 \begin{columns}
 \column{.4\textwidth}
  \begin{figure}
- \footnotesize Wiener
+	 \footnotesize Generalized Hammerstein-Wiener
  \vskip .5em
  \includegraphics[width=\textwidth]{img/generalized_HW.pdf}
  \end{figure}
- \column{.3\textwidth}
+ \column{.4\textwidth}
  \begin{figure}
  \vskip 1em
- \footnotesize Wiener-Hammerstein
- \vskip .5em
- \includegraphics[width=\textwidth]{img/parallel_WH.pdf}
+ \footnotesize Parallel Wiener-Hammerstein
+ \vskip 1em
+ \includegraphics[width=.9\textwidth]{img/parallel_WH.pdf}
  \end{figure}
 \end{columns}
-\vskip 2em
-extensively studied in System Identification.
 \vskip 1em
+extensively studied in System Identification.\\
 \pause
-Training through \structure{specialized algorithms} requiring, e.g. {analytic} expressions of gradients/jacobians.
+Training with \structure{specialized algorithms} requiring, e.g. {analytic} expressions of gradients/jacobians.
 %They are extensively studied in the system identification literature.
 
 %\vskip 2em
@@ -131,18 +131,17 @@ Training through \structure{specialized algorithms} requiring, e.g. {analytic} e
 \begin{itemize}
  \item  \Name\ generalizes block-oriented models to \structure{arbitrary connection} of MIMO blocks $G(z)$ and $F(\cdot)$
  \item More importantly, training is performed using a \structure{general approach} 
- \item Plain \structure{back-propagation} for gradient computation
+ \item Plain \structure{back-propagation} for gradient computation exploiting Deep Learning software
 \end{itemize}
 \begin{figure}
  \vskip 0em
  \footnotesize a \Name\ network
  \vskip .5em
- \includegraphics[width=.35\textwidth]{img/generic_dynonet.pdf}
+ \includegraphics[width=.60\textwidth]{img/generic_layer.pdf}
 \end{figure}
-
-\vskip .5em
+\pause
 \alert{Technical challenge}: back-propagation through the transfer function! \\
-No hint in the literature, no implementation in Deep Learning toolboxes.
+No hint in the literature, no ready-made implementation available.
 \end{frame}
 
 \begin{frame}{Transfer function (SISO)}
@@ -168,11 +167,11 @@ $$
 \pause
 %\vskip .5em
 Our goal is to provide $G$ with a \structure{back-propagation} behavior.\\
-Then, we can use $G$ within a Deep Learning optimization engine!
+The operation has to be \structure{efficient}!
 \end{frame}
 
 \begin{frame}{Forward pass}
-In back-propagation-based training, the user defines the network's \structure{computational graph} producing a \structure{loss} $\loss$ (to be minimized). \\
+In back-propagation-based training, the user defines a \structure{computational graph} producing a \structure{loss} $\loss$ (to be minimized). \\
 
 
 \vskip 2em
@@ -192,13 +191,15 @@ $$
 \pause
 \vskip 2em
 The forward pass for $G$ is easy: it is just the filtering operation! \\
+\vskip 1em
+Computational cost: \color{darkgreen}{$\mathcal{O}(T)$}.
 \end{frame}
 
  \begin{frame}{Backward pass}
  \begin{itemize}
  \item In the \structure{backward pass}, derivatives of $\loss$ w.r.t. the \structure{training variables} are computed. 
  Notation:  $\adjoint{x} = \pdiff{\loss}{x}$. 
- \item The procedure starts from $\adjoint{\loss} \equiv 1$ and goes \structure{backward}.
+ \item The procedure starts from $\adjoint{\loss} \equiv \pdiff{\loss}{\loss} = 1$ and goes \structure{backward}.
  \item Each operator must be able to ``push back'' derivatives from its outputs to its inputs
  \end{itemize}
  \vskip 1em
@@ -225,36 +226,39 @@ The forward pass for $G$ is easy: it is just the filtering operation! \\
 
  \end{columns}
 }
- \vskip 2em
+ \vskip 1.5em
 \uncover<3->{
-By defining these backward operations, we can use $G$ in Deep Learning!\\
-All \structure{technical details} are in the \Name\ arXiv paper\dots
+%By defining these backward operations, we can use $G$ in Deep Learning!\\
+%All \structure{technical details} are in the \Name\ arXiv paper\dots
+ \structure{Chain rule} of calculus is the basic ingredient, but certain tricks may be used to \structure{speed up} the operation. Let us see an example...\\
 }
  \end{frame}
 
  \begin{frame}{Backward pass for $\tvec{u}$}
- From $\adjoint{\tvec{y}}\equiv \pdiff{\loss}{\tvec{y}}$, compute $\adjoint{\tvec{u}} \equiv \pdiff{\loss}{\tvec{u}}$. \\
- \vskip 1em
+ 
+ Compute $\adjoint{\tvec{u}} \equiv \pdiff{\loss}{\tvec{u}}$ from $\adjoint{\tvec{y}}\equiv \pdiff{\loss}{\tvec{y}}$. \\
+ \pause
  \begin{itemize}
- \item Using the chain rule:
+ \item Applying the chain rule:
  \begin{footnotesize}
 $$\adjoint{\tvec{u}}_\tau = \pdiff{\loss}{\tvec{u}_\tau} 
-= \sum_{t=0}^{\nsamp-1}{\pdiff{\loss}{\tvec{y}_t} \pdiff{\tvec{y}_t}{\tvec{u}_\tau}} 
+= \sum_{t=0}^{\nsamp-1}{\pdiff{\loss}{\tvec{y}_t} \pdiff{\tvec{y}_t}{\tvec{u}_\tau}}
+=\sum_{t=0}^{\nsamp-1}{\adjoint{\tvec{y}}_t \tvec{g}_{t-\tau}}
 $$
 \end{footnotesize}
+where $\tvec{g}$ is the \structure{impulse response} of $G$.%contains the impulse response coefficients
 \pause
 \item From the expression above, by definition:
 \begin{footnotesize}
-$$\adjoint{\tvec{u}}_\tau =
-\sum_{t=0}^{\nsamp-1}{\adjoint{\tvec{y}}_t \tvec{g}_{t-\tau}} =   \tvec{g} \ccorr \adjoint{\tvec{y}},
+$$\adjoint{\tvec{u}} = \tvec{g} \ccorr \adjoint{\tvec{y}},
 $$
 \end{footnotesize}
-where $\tvec{g}$ contains the impulse response coefficients and $\ccorr$ is the \structure{cross-correlation}.
-This is already a valid formula, but it is  $\mathcal{O}(\nsamp^2)$
+where  $\ccorr$ is \structure{cross-correlation}.
+This implementation has cost  \alert{$\mathcal{O}(\nsamp^2)$}
 \pause
-\item The formula above is equivalent to applying the filter in reverse time! 
+\item It is equivalent to filtering $\adjoint{\tvec{y}}$ through $G$ in reverse time, and flipping the result. Implemented this way, the cost is {\color{darkgreen}{$\mathcal{O}(\nsamp)$}}! 
 $$ \adjoint{\tvec{u}} = \mathrm{flip}\big(G(q) \mathrm{flip}(\adjoint{\tvec{y}})\big)$$
-Implemented this way, the cost is $\mathcal{O}(\nsamp)$!
+\pause  All details also for $\adjoint{a}$ and $\adjoint{b}$ in the \Name\ arXiv paper\dots
 \end{itemize}
 \end{frame}
 
@@ -274,19 +278,22 @@ Use case:
 \end{figure}
  \column{.5\textwidth}
  \centering
+ \vskip -.5em
  Python code
   \begin{tiny}
 \begin{lstlisting}[language=python]
- G1 = LinearMimo(1,  4, ...) # a G-block
- F1 = StaticNonLin(4, 8, ...) # a NN?
- G2 = LinearMimo(8, 1, ...)
- G3 = LinearMimo(1, 1, ...)
+
+
+G1 = LinearMimo(1,  4, ...) # a SIMO tf
+F = StaticNonLin(4, 3, ...) # a static NN
+G2 = LinearMimo(3, 1, ...) # a MISO tf
+G3 = LinearMimo(1, 1, ...) # a SISO tf
  
-def model():  
-    y1 = G1(u)
-    z1 = F1(y1) 
+def model(in_data):  
+    y1 = G1(in_data)
+    z1 = F(y1) 
     y2 = G2(z1)
-    ymodel = y2 + G3(u)
+    out = y2 + G3(in_data)
     
 \end{lstlisting}
 \end{tiny}
@@ -324,7 +331,7 @@ def model():
  \end{columns}
  \vskip 2em
  \pause
-Compare favorably with state-of-the-art black-box identification techniques.
+Compare favorably with state-of-the-art black-box identification techniques. 
 \end{frame}
 
 \begin{frame}{Conclusions}
@@ -333,13 +340,13 @@ A neural network architecture containing linear dynamical operators parametrized
  \vskip 1em
  \begin{itemize}
   \item Extends \structure{1D-Convolutional} NNs to Infinite Impulse Response dynamics
-  \item Extends \structure{block-oriented} dynamical models with generic interconnections
-  \item Enables training through \structure{plain back-propagation}. No custom algorithm/code required
+  \item Extends \structure{block-oriented} dynamical models with arbitrary interconnections
+  \item Enables training through \structure{plain back-propagation}, at cost $\mathcal{O}(T)$.\\ No custom algorithm/code required
  \end{itemize}
-\vskip 2em
+\vskip 1em
 %We obtained good performance on public identification benchmark.
 \pause
-Future works:
+Current and future work:
 \begin{itemize}
  \item Estimation/control strategies
  \item System analysis/model reduction using e.g. linear tools 
