@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
 
     matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
-    matplotlib.rc('text', usetex=True)
+    #matplotlib.rc('text', usetex=True)
 
     # In[Set seed for reproducibility]
     np.random.seed(0)

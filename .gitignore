@@ -15,3 +15,10 @@
 /torchid/old/
 /sphinx/build/
 
+/slides/presentation_main.aux
+/slides/presentation_main.nav
+/slides/presentation_main.out
+/slides/presentation_main.log
+/slides/presentation_main.snm
+/slides/presentation_main.toc
+/slides/presentation_main.vrb
