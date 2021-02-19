@@ -97,7 +97,7 @@ numberstyle=\footnotesize,
 
 
 \maketitle
-\abstract[Summary]{This paper introduces a  network architecture, called \Name, utilizing linear dynamical operators as elementary building blocks.  Owing to the dynamical nature of these blocks,  \Name \  networks are tailored for sequence modeling and system identification purposes. The back-propagation behavior of the linear dynamical operator with respect to both its parameters and its input sequence is defined. This enables end-to-end training of structured networks containing linear dynamical operators and other differentiable units,  exploiting existing deep learning software. Examples show the effectiveness of the proposed approach on well-known system identification benchmarks.
+\abstract{This paper introduces a  network architecture, called \Name, utilizing linear dynamical operators as elementary building blocks.  Owing to the dynamical nature of these blocks,  \Name \  networks are tailored for sequence modeling and system identification purposes. The back-propagation behavior of the linear dynamical operator with respect to both its parameters and its input sequence is defined. This enables end-to-end training of structured networks containing linear dynamical operators and other differentiable units,  exploiting existing deep learning software. Examples show the effectiveness of the proposed approach on well-known system identification benchmarks.
 }
 
 \vskip 1em 
@@ -122,10 +122,9 @@ Using the plain bibtex style, the bibliographic entry should look like:\\ \\
 dynamical systems.} \textit{International Journal of Adaptive Control and Signal Processing}, ??(??):????-????, 2021.
 
 \noindent\rule{\textwidth}{1pt}
-%\end{large}
+
 
 \section{Introduction}
-\cite{forgione2021a}
 \subsection{Contribution}
 This paper introduces \Name, a neural network architecture tailored for sequence modeling and dynamical system learning (a.k.a. \emph{system identification}). The network is designed to process time series of arbitrary length and contains causal \emph{linear time-invariant} (LTI) dynamical operators as building blocks. 
 These LTI layers are parametrized in terms of  rational transfer functions, and thus apply \emph{infinite impulse response} (IIR) filtering to their input sequence. In the \Name\ architecture, the LTI layers are combined with \emph{static} (i.e., memoryless) non-linearities which can be  either elementary \emph{activation functions} applied {channel-wise}; fully connected feed-forward neural networks; or other differentiable operators (e.g, polynomials). 

@@ -11,7 +11,7 @@ In the dynoNet architecture, linear dynamical operators are combined with static
 activation functions applied channel-wise; fully connected feed-forward neural networks; or other differentiable operators. 
 
 
-![Multi-step block diagram](doc/dense_dynonet.png "A dense neural network vs. a dynoNet")
+![dense_dynonet](doc/dense_dynonet.png "A dense neural network vs. a dynoNet")
 
 # Folders:
 * [torchid](torchid):  PyTorch implementation of the linear dynamical operator (aka G-block in the paper) used in dynoNet
