@@ -1,4 +1,4 @@
-# dynoNet: a neural network architecture for learning dynamical systems 
+# dynoNet: A neural network architecture for learning dynamical systems 
 
 This repository contains the Python code to reproduce the results of the paper "dynoNet: a neural network architecture for learning dynamical systems"
 by Marco Forgione and Dario Piga.
