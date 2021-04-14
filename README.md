@@ -48,3 +48,22 @@ These dependencies may be installed through the commands:
 conda install numpy scipy pandas matplotlib
 conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
 ```
+
+# Citing
+
+If you find this project useful, we encourage you to
+
+* Star this repository :star: 
+* Cite the [paper](https://onlinelibrary.wiley.com/doi/abs/10.1002/acs.3216) 
+```
+@article{forgione2021dyno,
+  title={\textit{dyno{N}et}: A neural network architecture for learning dynamical systems},
+  author={Forgione, M. and Piga, D.},
+  journal={International Journal of Adaptive Control and Signal Processing},
+  volume={35},
+  number={4},
+  pages={612--626},
+  year={2021},
+  publisher={Wiley}
+}
+```
