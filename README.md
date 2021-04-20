@@ -12,7 +12,7 @@ activation functions applied channel-wise; fully connected feed-forward neural n
 
 ![dense_dynonet](doc/dense_dynonet.png "A dense neural network vs. a dynoNet")
 
-A 15-min presentation about dynoNet is available [here](https://www.youtube.com/watch?v=SrrlhGPLBrA&t=55s)
+A 15-min presentation about dynoNet is available [here](https://www.youtube.com/watch?v=SrrlhGPLBrA&t=55s).
 
 # Folders:
 * [torchid](torchid):  PyTorch implementation of the linear dynamical operator (aka G-block in the paper) used in dynoNet
