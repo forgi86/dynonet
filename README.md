@@ -1,7 +1,6 @@
 # dynoNet: A neural network architecture for learning dynamical systems 
 
-This repository contains the Python code to reproduce the results of the paper "dynoNet: A neural network architecture for learning dynamical systems"
-by Marco Forgione and Dario Piga.
+This repository contains the Python code to reproduce the results of the paper [dynoNet: A neural network architecture for learning dynamical systems](https://arxiv.org/pdf/2006.02250.pdf) by Marco Forgione and Dario Piga.
 
 In this work, we introduce the linear dynamical operator as a differentiable layer compatible with back-propagation-based training. 
 The operator is parametrized as a rational transfer function and thus can represent an infinite impulse response (IIR)
@@ -13,10 +12,13 @@ activation functions applied channel-wise; fully connected feed-forward neural n
 
 ![dense_dynonet](doc/dense_dynonet.png "A dense neural network vs. a dynoNet")
 
+A 15-min presentation about dynoNet is available [here](https://www.youtube.com/watch?v=SrrlhGPLBrA&t=55s)
+
 # Folders:
 * [torchid](torchid):  PyTorch implementation of the linear dynamical operator (aka G-block in the paper) used in dynoNet
 * [examples](examples): examples using dynoNet for system identification 
 * [util](util): definition of metrics R-square, RMSE, fit index 
+* [doc](doc): paper & slides
 
 Three [examples](examples) discussed in the paper are:
 
