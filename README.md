@@ -51,6 +51,14 @@ conda install numpy scipy pandas matplotlib
 conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
 ```
 
+# Local Installation
+From a local copy of this repository, where setup.py and setup.cfg are located, enter:
+
+```
+pip install -e .
+```
+
+This should install the dependencies, too. Then you can run the [examples](examples).
 # Citing
 
 If you find this project useful, we encourage you to
