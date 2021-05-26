@@ -93,6 +93,7 @@ if __name__ == '__main__':
     ax[2].set_ylabel("Input (V)")
     ax[2].grid(True)
     ax[2].set_xlabel("Time (s)")
+    plt.show()
 
     # In[Metrics]
     e_rms = util.metrics.error_rmse(y_meas, y_hat)[0]
@@ -114,5 +115,6 @@ if __name__ == '__main__':
     plt.ylabel("Position (m)")
     plt.xlabel("Time (s)")
     plt.tight_layout()
-    plt.savefig('EMPS_timetrace.pdf')
+    plt.show()
+#    plt.savefig('EMPS_timetrace.pdf')
 

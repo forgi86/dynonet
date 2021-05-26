@@ -119,4 +119,5 @@ if __name__ == '__main__':
     plt.legend(loc='upper right')
     plt.tight_layout()
     plt.grid(True)
-    plt.savefig('BW_timetrace.pdf')
+    plt.show()
+#    plt.savefig('BW_timetrace.pdf')

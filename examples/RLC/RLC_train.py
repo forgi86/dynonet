@@ -108,9 +108,11 @@ if __name__ == '__main__':
     plt.plot(t, y_noise, 'r', label="$y_{noise}$")
     plt.plot(t, y_hat, 'b', label="$\hat y$")
     plt.legend()
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
+    plt.show()
 
 

@@ -200,12 +200,13 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(LOSS_ITR)
     plt.grid(True)
-
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS_TRAIN, 'r')
     plt.plot(LOSS_VAL, 'g')
     plt.grid(True)
+    plt.show()
 
     # In[Metrics]
 

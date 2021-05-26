@@ -168,14 +168,17 @@ if __name__ == '__main__':
     plt.plot(y[0, :, 0], 'k')
     plt.plot(y_hat[0, :, 0], 'g')
     plt.plot(y[0, :, 0] - y_hat[0, :, 0], 'r')
+    plt.show()
 
     plt.figure()
     plt.plot(y_lin[0, :], y_hat[0, :], '*k', label='x')
     plt.legend()
+    plt.show()
 
     # In[Plot loss]
     plt.figure()
     plt.plot(LOSS)
+    plt.show()
 
     # In[Inspect]
     with torch.no_grad():
@@ -217,8 +220,11 @@ if __name__ == '__main__':
     plt.plot(x_int[0, 0, :], E_xx[0, 0, :])
     plt.xlabel('x')
     plt.ylabel('E')
+    plt.show()
 
     plt.figure()
     plt.plot(x_int[0, 0, :], exp_E[0, 0, :])
     plt.xlabel('x')
     plt.ylabel('E')
+    plt.show()
+

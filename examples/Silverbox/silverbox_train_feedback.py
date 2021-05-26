@@ -133,12 +133,14 @@ if __name__ == '__main__':
     plt.plot(t_fit, y_hidden, 'b', label="$\hat y$")
     plt.plot(t_fit, y_lin, 'r', label="$y_{lin}$")
     plt.legend()
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS)
     plt.plot(LOSS_FIT)
     plt.plot(LOSS_CONSISTENCY)
     plt.grid(True)
+    plt.show()
 
     # In[Plot static non-linearity]
 
@@ -156,6 +158,7 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     idx_plot_nl = np.abs(in_nl) > 0.02
     idx_plot_h = np.abs(y_hidden) > 0.02
@@ -166,6 +169,7 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
 # In[Metrics]
     e_rms = util.metrics.error_rmse(y_fit, y_lin)[0]

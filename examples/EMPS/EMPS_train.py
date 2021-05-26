@@ -126,3 +126,4 @@ if __name__ == '__main__':
     ax[2].set_ylabel("Input (V)")
     ax[2].grid(True)
     ax[2].set_xlabel("Time (s)")
+    plt.show()

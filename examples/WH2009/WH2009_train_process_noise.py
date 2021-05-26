@@ -77,7 +77,7 @@ if __name__ == '__main__':
     N_sim_d = n_fit + n_skip_d
     e = np.random.randn(N_sim_d)
     te = np.arange(N_sim_d) * ts
-    _, d, _ = control.forced_response(Hud, te, e)
+    d, u = control.forced_response(Hud, te, e)
     d_fast = d[n_skip_d:]
     d_fast = d_fast.reshape(-1, 1)
     y_fit_clean = np.copy(y_fit)
@@ -169,11 +169,13 @@ if __name__ == '__main__':
     plt.plot(t_fit, y_fit_clean, 'r', label="$y_{clean}$")
     plt.plot(t_fit, y_hat, 'b', label="$\hat y$")
     plt.legend()
+    plt.show()
 
     # In[Plot loss]
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
+    plt.show()
 
     # In[Plot static non-linearity]
 
@@ -192,6 +194,7 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]

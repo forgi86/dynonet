@@ -39,3 +39,4 @@ if __name__ == '__main__':
     ax[1].set_xlabel('Time (s)')
     ax[1].set_ylabel('Force (N)')
     ax[1].grid(True)
+    plt.show()

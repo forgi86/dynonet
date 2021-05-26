@@ -103,10 +103,12 @@ if __name__ == '__main__':
     plt.plot(t_fit, y_fit, 'k', label="$y$")
     plt.plot(t_fit, y_hat, 'b', label="$\hat y$")
     plt.legend()
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
+    plt.show()
 
     # In[Plot static non-linearity]
 
@@ -125,6 +127,7 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
@@ -135,7 +138,7 @@ if __name__ == '__main__':
     import control
 
     #Gg_lin = control.TransferFunction(G.b_coeff.detach().numpy(), np.r_[1.0, G.a_coeff.detach().numpy()], ts)
-    mag, phase, omega = control.bode(Gg_lin)
+    #mag, phase, omega = control.bode(Gg_lin)
 
 
 

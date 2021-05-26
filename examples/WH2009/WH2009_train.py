@@ -140,11 +140,13 @@ if __name__ == '__main__':
     plt.plot(t_fit, y_fit, 'k', label="$y$")
     plt.plot(t_fit, y_hat, 'b', label="$\hat y$")
     plt.legend()
+    plt.show()
 
     # In[Plot loss]
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
+    plt.show()
 
     # In[Plot static non-linearity]
 
@@ -163,6 +165,7 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     # In[Plot]
     e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]

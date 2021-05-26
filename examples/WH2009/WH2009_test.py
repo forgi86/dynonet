@@ -79,7 +79,8 @@ if __name__ == '__main__':
     plt.xlabel('Time (s)')
     plt.ylabel('Voltage (V)')
     plt.legend(loc='upper right')
-    plt.savefig('WH_fit.pdf')
+#    plt.savefig('WH_fit.pdf')
+    plt.show()
 
     # In[Inspect linear model]
 
@@ -91,11 +92,13 @@ if __name__ == '__main__':
     _, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
     #    plt.plot(G1_num)
     plt.plot(y_imp)
-    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+    plt.show()
     plt.figure()
     mag_G1, phase_G1, omega_G1 = control.bode(G1_sys, omega_limits=[1e2, 1e5])
     plt.suptitle("$G_1$ bode plot")
-    plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
+    plt.show()
 
     # G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
     G2_num, G2_den = G2.get_tfdata()
@@ -104,11 +107,13 @@ if __name__ == '__main__':
     plt.title("$G_2$ impulse response")
     _, y_imp = control.impulse_response(G2_sys, np.arange(n_imp) * ts)
     plt.plot(y_imp)
-    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+    plt.show()
     plt.figure()
     mag_G2, phase_G2, omega_G2 = control.bode(G2_sys, omega_limits=[1e2, 1e5])
     plt.suptitle("$G_2$ bode plot")
-    plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
+    plt.show()
 
 # In[Inspect static non-linearity]
 
@@ -126,6 +131,7 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     # In[Metrics]
     idx_test = range(t_test_start + t_skip, t_test_end)
@@ -150,4 +156,5 @@ if __name__ == '__main__':
     plt.ylabel('Voltage (V)')
     plt.legend(loc='upper right')
     plt.tight_layout()
-    plt.savefig('WH_timetrace.pdf')
+#    plt.savefig('WH_timetrace.pdf')
+    plt.show()

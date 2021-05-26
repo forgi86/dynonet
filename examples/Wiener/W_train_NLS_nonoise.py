@@ -96,8 +96,10 @@ if __name__ == '__main__':
     plt.plot(y_torch[0, :, 0], 'k')
     plt.plot(y_hat[0, :, 0], 'g')
     plt.plot(y_torch[0, :, 0]-y_hat[0, :, 0], 'r')
+    plt.show()
 
     # In[Plot loss]
     plt.figure()
     plt.plot(LOSS)
+    plt.show()
 

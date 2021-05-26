@@ -52,11 +52,13 @@ if __name__ == '__main__':
     plt.plot(y[0, :], 'r', label='y')
     plt.plot(y0[0, :], 'g', label='y0')
     plt.legend()
+    plt.show()
 
     plt.figure()
     plt.plot(x[0, :], 'g', label='x')
     plt.plot(x0[0, :], 'r', label='x0')
     plt.legend()
+    plt.show()
 
     # In[Save]
     if not (os.path.exists('data')):

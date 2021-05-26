@@ -101,6 +101,7 @@ if __name__ == '__main__':
     plt.plot(y0[0, :, 0], 'k')
     plt.plot(y_hat[0, :, 0], 'g')
     plt.plot(y0[0, :, 0] - y_hat[0, :, 0], 'r')
+    plt.show()
 
     plt.figure()
     plt.plot(y_lin[0, :], y_hat[0, :], '*k', label='x')
@@ -110,8 +111,10 @@ if __name__ == '__main__':
     plt.plot(y_torch[0, :, 0], 'k')
     plt.plot(y_hat[0, :, 0], 'g')
     plt.plot(y_torch[0, :, 0]-y_hat[0, :, 0], 'r')
+    plt.show()
 
     # In[Plot loss]
     plt.figure()
     plt.plot(LOSS)
+    plt.show()
 
