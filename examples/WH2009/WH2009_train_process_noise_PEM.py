@@ -9,7 +9,7 @@ import control.matlab
 import time
 
 
-import util.metrics
+import dynonet.metrics
 
 # In[Main]
 if __name__ == '__main__':

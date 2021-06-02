@@ -8,7 +8,7 @@ import torch
 import matplotlib.pyplot as plt
 from dynonet.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
 from dynonet.static import MimoStaticNonLinearity, MimoStaticNonLinearity
-import util.metrics
+import dynonet.metrics
 
 if __name__ == '__main__':
 
@@ -96,9 +96,9 @@ if __name__ == '__main__':
     plt.show()
 
     # In[Metrics]
-    e_rms = util.metrics.error_rmse(y_meas, y_hat)[0]
-    fit_idx = util.metrics.fit_index(y_meas, y_hat)[0]
-    r_sq = util.metrics.r_squared(y_meas, y_hat)[0]
+    e_rms = dynonet.metrics.error_rmse(y_meas, y_hat)[0]
+    fit_idx = dynonet.metrics.fit_index(y_meas, y_hat)[0]
+    r_sq = dynonet.metrics.r_squared(y_meas, y_hat)[0]
 
     print(f"RMSE: {e_rms:.2E} mm\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
 

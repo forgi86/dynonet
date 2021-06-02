@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import time
 from dynonet.lti import SisoLinearDynamicalOperator
 from dynonet.static import SisoStaticNonLinearity
-import util.metrics
+import dynonet.metrics
 
 if __name__ == '__main__':
 
@@ -172,9 +172,9 @@ if __name__ == '__main__':
     plt.show()
 
 # In[Metrics]
-    e_rms = util.metrics.error_rmse(y_fit, y_lin)[0]
-    fit_idx = util.metrics.fit_index(y_fit, y_lin)[0]
-    r_sq = util.metrics.r_squared(y_fit, y_lin)[0]
+    e_rms = dynonet.metrics.error_rmse(y_fit, y_lin)[0]
+    fit_idx = dynonet.metrics.fit_index(y_fit, y_lin)[0]
+    r_sq = dynonet.metrics.r_squared(y_fit, y_lin)[0]
     print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
 
 

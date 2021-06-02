@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
-import util.metrics
+import dynonet.metrics
 
 
 class StaticNonLin(nn.Module):
@@ -157,9 +157,9 @@ if __name__ == '__main__':
     plt.show()
 
     # In[Plot]
-    e_rms = util.metrics.error_rmse(y_fit, y_hat)[0]
-    fit_idx = util.metrics.fit_index(y_fit, y_hat)[0]
-    r_sq = util.metrics.r_squared(y_fit, y_hat)[0]
+    e_rms = dynonet.metrics.error_rmse(y_fit, y_hat)[0]
+    fit_idx = dynonet.metrics.fit_index(y_fit, y_hat)[0]
+    r_sq = dynonet.metrics.r_squared(y_fit, y_hat)[0]
     print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")
 
 

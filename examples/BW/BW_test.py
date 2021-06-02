@@ -5,7 +5,7 @@ import torch
 import matplotlib
 import matplotlib.pyplot as plt
 from dynonet.lti import MimoLinearDynamicalOperator
-import util.metrics
+import dynonet.metrics
 from dynonet.static import MimoStaticNonLinearity
 
 if __name__ == '__main__':
@@ -99,9 +99,9 @@ if __name__ == '__main__':
 
     # In[Metrics]
     n_skip = 300
-    e_rms = util.metrics.error_rmse(scaler_y*y[n_skip:], scaler_y*y_hat[n_skip:])[0]
-    fit_idx = util.metrics.fit_index(y[n_skip:], y_hat[n_skip:])[0]
-    r_sq = util.metrics.r_squared(y[n_skip:], y_hat[n_skip:])[0]
+    e_rms = dynonet.metrics.error_rmse(scaler_y*y[n_skip:], scaler_y*y_hat[n_skip:])[0]
+    fit_idx = dynonet.metrics.fit_index(y[n_skip:], y_hat[n_skip:])[0]
+    r_sq = dynonet.metrics.r_squared(y[n_skip:], y_hat[n_skip:])[0]
 
     print(f"RMSE: {e_rms:.2E} mm\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
 

@@ -7,7 +7,7 @@ from dynonet.static import SisoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
-import util.metrics
+import dynonet.metrics
 
 
 def normal_standard_cdf(val):
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     plt.show()
 
     # In[RMSE]
-    e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
+    e_rms = dynonet.metrics.error_rmse(y_hat, y_fit)[0]
     print(f"RMSE: {e_rms:.2f}") # target: 1mv
 
     # In[v_hat]

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
-import util.metrics
+import dynonet.metrics
 
 # In[Main]
 if __name__ == '__main__':
@@ -166,5 +166,5 @@ if __name__ == '__main__':
     plt.show()
 
     # In[Plot]
-    e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
+    e_rms = dynonet.metrics.error_rmse(y_hat, y_fit)[0]
     print(f"RMSE: {e_rms:.2f}")

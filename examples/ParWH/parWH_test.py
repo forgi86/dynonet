@@ -7,7 +7,7 @@ import torch.nn as nn
 import control
 from dynonet.lti import MimoLinearDynamicalOperator
 from dynonet.static import MimoStaticNonLinearity
-import util.metrics
+import dynonet.metrics
 
 
 if __name__ == '__main__':
@@ -160,10 +160,10 @@ if __name__ == '__main__':
 
     idx_test = range(n_skip, N)
 
-    e_rms = 1000*util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])
-    mae = 1000 * util.metrics.error_mae(y_meas[idx_test], y_hat[idx_test])
-    fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])
-    r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])
-    u_rms = 1000*util.metrics.error_rmse(u, 0)
+    e_rms = 1000*dynonet.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])
+    mae = 1000 * dynonet.metrics.error_mae(y_meas[idx_test], y_hat[idx_test])
+    fit_idx = dynonet.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])
+    r_sq = dynonet.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])
+    u_rms = 1000*dynonet.metrics.error_rmse(u, 0)
 
     print(f"RMSE: {e_rms:.2f}mV\nMAE: {mae:.2f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}\nRMSU: {u_rms:.2f}mV")
