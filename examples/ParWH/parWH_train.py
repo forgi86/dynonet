@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import torch.utils.data
-from torchid.module.lti import MimoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity
 from examples.ParWH.common import ParallelWHDataset
 from tqdm import tqdm
 

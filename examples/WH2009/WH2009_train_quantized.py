@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoLinearDynamicalOperator
-from torchid.module.static import SisoStaticNonLinearity
+from dynonet.lti import SisoLinearDynamicalOperator
+from dynonet.static import SisoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
 import util.metrics

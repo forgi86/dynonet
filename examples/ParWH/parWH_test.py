@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import control
-from torchid.module.lti import MimoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity
 import util.metrics
 
 

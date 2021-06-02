@@ -7,8 +7,8 @@ import scipy.io
 import torch
 import time
 import matplotlib.pyplot as plt
-from torchid.module.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity, MimoStaticNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity, MimoStaticNonLinearity
 
 if __name__ == '__main__':
 

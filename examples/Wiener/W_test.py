@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import h5py
-from torchid.module.lti import SisoLinearDynamicalOperator
-from torchid.module.static import SisoStaticNonLinearity
+from dynonet.lti import SisoLinearDynamicalOperator
+from dynonet.static import SisoStaticNonLinearity
 import time
 
 if __name__ == '__main__':

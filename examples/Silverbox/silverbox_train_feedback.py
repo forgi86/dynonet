@@ -4,8 +4,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import time
-from torchid.module.lti import SisoLinearDynamicalOperator
-from torchid.module.static import SisoStaticNonLinearity
+from dynonet.lti import SisoLinearDynamicalOperator
+from dynonet.static import SisoStaticNonLinearity
 import util.metrics
 
 if __name__ == '__main__':

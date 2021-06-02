@@ -4,9 +4,9 @@ import numpy as np
 import torch
 import matplotlib
 import matplotlib.pyplot as plt
-from torchid.module.lti import MimoLinearDynamicalOperator
+from dynonet.lti import MimoLinearDynamicalOperator
 import util.metrics
-from torchid.module.static import MimoStaticNonLinearity
+from dynonet.static import MimoStaticNonLinearity
 
 if __name__ == '__main__':
 
