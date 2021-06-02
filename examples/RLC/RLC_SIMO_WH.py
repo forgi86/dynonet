@@ -2,8 +2,8 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import MimoLinearDynamicalOperator
-from torchid.module.static import MimoChannelWiseNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator
+from dynonet.static import MimoChannelWiseNonLinearity
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
