@@ -4,7 +4,7 @@ dynoNet API
 LTI blocks
 ---------------
 
-.. automodule:: torchid.module.lti
+.. automodule:: dynonet.lti
    :members:
    :special-members:
    :member-order: bysource
@@ -14,8 +14,29 @@ LTI blocks
 Static blocks
 ---------------
 
-.. automodule:: torchid.module.static
+.. automodule:: dynonet.static
    :members:
    :special-members:
    :member-order: bysource
    :exclude-members: __init__
+
+---------------
+Metrics
+---------------
+
+.. automodule:: dynonet.metrics
+   :members:
+   :special-members:
+   :member-order: bysource
+   :exclude-members: __init__
+
+---------------
+Filtering
+---------------
+
+.. automodule:: dynonet.filtering
+   :members:
+   :special-members:
+   :member-order: bysource
+   :exclude-members: __init__
+
