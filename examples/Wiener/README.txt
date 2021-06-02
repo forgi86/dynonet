@@ -13,7 +13,7 @@ to initialize the estimate for the heavier ML estimation task.
 To run the example:
 
 1. install pyro, e.g., "pip install pyro-ppl"
-2. python W_train_NLS_no_noise.py
+2. python W_train_NLS_nonoise.py
 3. python W_train_NLS.py
 4. python W_train_ML_refine.py
 5. python W_test.py
