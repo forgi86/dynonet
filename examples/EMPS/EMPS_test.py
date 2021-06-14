@@ -6,9 +6,9 @@ import scipy as sp
 import scipy.io
 import torch
 import matplotlib.pyplot as plt
-from torchid.module.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity, MimoStaticNonLinearity
-import util.metrics
+from dynonet.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity, MimoStaticNonLinearity
+import dynonet.metrics
 
 if __name__ == '__main__':
 
@@ -93,11 +93,12 @@ if __name__ == '__main__':
     ax[2].set_ylabel("Input (V)")
     ax[2].grid(True)
     ax[2].set_xlabel("Time (s)")
+    plt.show()
 
     # In[Metrics]
-    e_rms = util.metrics.error_rmse(y_meas, y_hat)[0]
-    fit_idx = util.metrics.fit_index(y_meas, y_hat)[0]
-    r_sq = util.metrics.r_squared(y_meas, y_hat)[0]
+    e_rms = dynonet.metrics.error_rmse(y_meas, y_hat)[0]
+    fit_idx = dynonet.metrics.fit_index(y_meas, y_hat)[0]
+    r_sq = dynonet.metrics.r_squared(y_meas, y_hat)[0]
 
     print(f"RMSE: {e_rms:.2E} mm\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
 
@@ -114,5 +115,6 @@ if __name__ == '__main__':
     plt.ylabel("Position (m)")
     plt.xlabel("Time (s)")
     plt.tight_layout()
-    plt.savefig('EMPS_timetrace.pdf')
+    plt.show()
+#    plt.savefig('EMPS_timetrace.pdf')
 

@@ -6,7 +6,7 @@ import control.matlab
 import pandas as pd
 import os
 
-from examples.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_mod
+from symbolic_RLC import fxu_ODE, fxu_ODE_mod
 
 if __name__ == '__main__':
 
@@ -30,7 +30,10 @@ if __name__ == '__main__':
     N_sim_u = N_sim + N_skip
     e = np.random.randn(N_sim_u)
     te = np.arange(N_sim_u) * Ts
-    _, u, _ = control.forced_response(Hu, te, e)
+#    _, u, _ = control.forced_response(Hu, te, e)
+    dum, u = control.forced_response(Hu, te, e)
+    print (dum)
+    print (u)
     u = u[N_skip:]
     u = u /np.std(u) * std_input
     
@@ -75,6 +78,7 @@ if __name__ == '__main__':
     ax[0].grid(True)
     ax[1].grid(True)
     ax[2].grid(True)
+    plt.show()
 
     # In[Save]
     if not os.path.exists("data"):

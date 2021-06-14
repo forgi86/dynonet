@@ -40,4 +40,5 @@ if __name__ == '__main__':
     ax[1].plot(t, u, 'k', label="$u$")
     ax[1].legend()
     ax[1].grid()
+    plt.show()
 

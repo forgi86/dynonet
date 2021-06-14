@@ -2,12 +2,12 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoLinearDynamicalOperator
+from dynonet.lti import SisoLinearDynamicalOperator
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn
 
-import util.metrics
+import dynonet.metrics
 
 
 class StaticNonLin(nn.Module):
@@ -137,10 +137,12 @@ if __name__ == '__main__':
     plt.plot(t_fit, y_fit, 'k', label="$y$")
     plt.plot(t_fit, y_hat, 'b', label="$\hat y$")
     plt.legend()
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS)
     plt.grid(True)
+    plt.show()
 
     # In[Plot static non-linearity]
 
@@ -159,9 +161,10 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     # In[Plot]
-    e_rms = util.metrics.error_rmse(y_hat, y_fit)[0]
+    e_rms = dynonet.metrics.error_rmse(y_hat, y_fit)[0]
     print(f"RMSE: {e_rms:.2f}")
 
 

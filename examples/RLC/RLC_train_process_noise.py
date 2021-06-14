@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import control.matlab
-from torchid.module.lti import SisoLinearDynamicalOperator
+from dynonet.lti import SisoLinearDynamicalOperator
 import matplotlib.pyplot as plt
 import time
 

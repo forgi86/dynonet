@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import h5py
-from torchid.module.lti import SisoLinearDynamicalOperator
-from torchid.module.static import SisoStaticNonLinearity
+from dynonet.lti import SisoLinearDynamicalOperator
+from dynonet.static import SisoStaticNonLinearity
 import time
 
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     n_b = 1
     n_k = 1
 
-    model_name = 'ML_only_static'
+    model_name = 'NLS_nonoise'
     dataset_name = 'train_nonoise'
     # In[Load data]
     filename = os.path.join('data', 'dataset.h5')
@@ -60,6 +60,7 @@ if __name__ == '__main__':
     plt.plot(y0[0, :, 0]-y_hat[0, :, 0], 'r', label='e')
     plt.grid()
     plt.legend()
+    plt.show()
 
 
     # In[Plot loss]

@@ -7,8 +7,8 @@ import scipy.io
 import torch
 import time
 import matplotlib.pyplot as plt
-from torchid.module.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity, MimoStaticNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator, SisoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity, MimoStaticNonLinearity
 
 if __name__ == '__main__':
 
@@ -126,3 +126,4 @@ if __name__ == '__main__':
     ax[2].set_ylabel("Input (V)")
     ax[2].grid(True)
     ax[2].set_xlabel("Time (s)")
+    plt.show()

@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import MimoLinearDynamicalOperator
+from dynonet.lti import MimoLinearDynamicalOperator
 import matplotlib.pyplot as plt
 import time
 import torch.nn as nn

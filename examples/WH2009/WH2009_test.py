@@ -2,13 +2,13 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoLinearDynamicalOperator
-from torchid.module.static import SisoStaticNonLinearity
+from dynonet.lti import SisoLinearDynamicalOperator
+from dynonet.static import SisoStaticNonLinearity
 
 import matplotlib
 import matplotlib.pyplot as plt
 import control
-import util.metrics
+import dynonet.metrics
 
 
 # In[Main]
@@ -79,7 +79,8 @@ if __name__ == '__main__':
     plt.xlabel('Time (s)')
     plt.ylabel('Voltage (V)')
     plt.legend(loc='upper right')
-    plt.savefig('WH_fit.pdf')
+#    plt.savefig('WH_fit.pdf')
+    plt.show()
 
     # In[Inspect linear model]
 
@@ -91,11 +92,13 @@ if __name__ == '__main__':
     _, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
     #    plt.plot(G1_num)
     plt.plot(y_imp)
-    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+    plt.show()
     plt.figure()
     mag_G1, phase_G1, omega_G1 = control.bode(G1_sys, omega_limits=[1e2, 1e5])
     plt.suptitle("$G_1$ bode plot")
-    plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
+    plt.show()
 
     # G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
     G2_num, G2_den = G2.get_tfdata()
@@ -104,11 +107,13 @@ if __name__ == '__main__':
     plt.title("$G_2$ impulse response")
     _, y_imp = control.impulse_response(G2_sys, np.arange(n_imp) * ts)
     plt.plot(y_imp)
-    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
+    plt.show()
     plt.figure()
     mag_G2, phase_G2, omega_G2 = control.bode(G2_sys, omega_limits=[1e2, 1e5])
     plt.suptitle("$G_2$ bode plot")
-    plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
+#    plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
+    plt.show()
 
 # In[Inspect static non-linearity]
 
@@ -126,12 +131,13 @@ if __name__ == '__main__':
     plt.xlabel('Static non-linearity input (-)')
     plt.ylabel('Static non-linearity input (-)')
     plt.grid(True)
+    plt.show()
 
     # In[Metrics]
     idx_test = range(t_test_start + t_skip, t_test_end)
-    e_rms = 1000*util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
-    fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
-    r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
+    e_rms = 1000*dynonet.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
+    fit_idx = dynonet.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
+    r_sq = dynonet.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 
     print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
@@ -150,4 +156,5 @@ if __name__ == '__main__':
     plt.ylabel('Voltage (V)')
     plt.legend(loc='upper right')
     plt.tight_layout()
-    plt.savefig('WH_timetrace.pdf')
+#    plt.savefig('WH_timetrace.pdf')
+    plt.show()

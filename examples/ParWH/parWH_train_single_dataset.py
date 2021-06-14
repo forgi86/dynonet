@@ -2,12 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 import torch
-from torchid.module.lti import MimoLinearDynamicalOperator
+from dynonet.lti import MimoLinearDynamicalOperator
 import torch.nn as nn
 
 import matplotlib.pyplot as plt
 import time
-import util.metrics
+import dynonet.metrics
 
 class StaticNonLin(nn.Module):
 
@@ -163,6 +163,7 @@ if __name__ == '__main__':
     ax[1].plot(t, u, 'k', label="$u$")
     ax[1].legend()
     ax[1].grid()
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS)
@@ -171,8 +172,8 @@ if __name__ == '__main__':
     # In[Metrics]
 
     idx_metric = range(0, N)
-    e_rms = util.metrics.error_rmse(y[idx_metric], y_hat_np[idx_metric])
-    fit_idx = util.metrics.fit_index(y[idx_metric], y_hat_np[idx_metric])
-    r_sq = util.metrics.r_squared(y[idx_metric], y_hat_np[idx_metric])
+    e_rms = dynonet.metrics.error_rmse(y[idx_metric], y_hat_np[idx_metric])
+    fit_idx = dynonet.metrics.fit_index(y[idx_metric], y_hat_np[idx_metric])
+    r_sq = dynonet.metrics.r_squared(y[idx_metric], y_hat_np[idx_metric])
 
     print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")

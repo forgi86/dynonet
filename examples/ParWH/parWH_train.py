@@ -2,14 +2,14 @@ import pandas as pd
 import numpy as np
 import os
 import torch.utils.data
-from torchid.module.lti import MimoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity
 from examples.ParWH.common import ParallelWHDataset
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import time
-import util.metrics
+import dynonet.metrics
 
 if __name__ == '__main__':
 
@@ -200,18 +200,19 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(LOSS_ITR)
     plt.grid(True)
-
+    plt.show()
 
     plt.figure()
     plt.plot(LOSS_TRAIN, 'r')
     plt.plot(LOSS_VAL, 'g')
     plt.grid(True)
+    plt.show()
 
     # In[Metrics]
 
 #    idx_metric = range(0, N_per_period)
-#    e_rms = util.metrics.error_rmse(y[idx_metric], y_hat_np[idx_metric])
-#    fit_idx = util.metrics.fit_index(y[idx_metric], y_hat_np[idx_metric])
-#    r_sq = util.metrics.r_squared(y[idx_metric], y_hat_np[idx_metric])
+#    e_rms = dynonet.metrics.error_rmse(y[idx_metric], y_hat_np[idx_metric])
+#    fit_idx = dynonet.metrics.fit_index(y[idx_metric], y_hat_np[idx_metric])
+#    r_sq = dynonet.metrics.r_squared(y[idx_metric], y_hat_np[idx_metric])
 
 #    print(f"RMSE: {e_rms:.4f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}")

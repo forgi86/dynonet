@@ -4,8 +4,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
-from torchid.module.lti import MimoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity
+from dynonet.lti import MimoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity
 
 
 # Good results, but a bit slow...

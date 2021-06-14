@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import scipy as sp
 import scipy.signal
-from util.filtering import lfilter_mimo_components
+from dynonet.filtering import lfilter_mimo_components
 
 
 class MimoLinearDynamicalOperatorFun(torch.autograd.Function):

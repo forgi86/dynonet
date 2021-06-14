@@ -50,6 +50,7 @@ if __name__ == '__main__':
     ax[1].plot(t_fit, u_fit, 'k', label="$y$")
     ax[1].grid()
     plt.legend()
+    plt.show()
 
 
 

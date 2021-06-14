@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import control
-from torchid.module.lti import MimoLinearDynamicalOperator
-from torchid.module.static import MimoStaticNonLinearity
-import util.metrics
+from dynonet.lti import MimoLinearDynamicalOperator
+from dynonet.static import MimoStaticNonLinearity
+import dynonet.metrics
 
 
 if __name__ == '__main__':
@@ -104,6 +104,7 @@ if __name__ == '__main__':
     ax[1].plot(t, u, 'k', label="$u$")
     ax[1].legend()
     ax[1].grid()
+    plt.show()
 
     # In[Inspect linear model]
 
@@ -118,8 +119,11 @@ if __name__ == '__main__':
 
     plt.figure()
     mag_G1_1, phase_G1_1, omega_G1_1 = control.bode(G1_sys[0, 0])
+    plt.show()
+
     plt.figure()
     mag_G1_2, phase_G1_2, omega_G1_2 = control.bode(G1_sys[1, 0])
+    plt.show()
 
     # Second linear block
     a_coeff_2 = G2.a_coeff.detach().numpy()
@@ -132,8 +136,10 @@ if __name__ == '__main__':
 
     plt.figure()
     mag_G2_1, phase_G2_1, omega_G2_1 = control.bode(G2_sys[0, 0])
+    plt.show()
     plt.figure()
     mag_G2_2, phase_G2_2, omega_G2_2 = control.bode(G2_sys[0, 1])
+    plt.show()
 
 
 
@@ -148,15 +154,16 @@ if __name__ == '__main__':
     ax[1].grid("True")
     ax[1].set_xlabel('ylin_2')
     ax[1].set_ylabel('ynl_2')
+    plt.show()
 
     # In[Metrics]
 
     idx_test = range(n_skip, N)
 
-    e_rms = 1000*util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])
-    mae = 1000 * util.metrics.error_mae(y_meas[idx_test], y_hat[idx_test])
-    fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])
-    r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])
-    u_rms = 1000*util.metrics.error_rmse(u, 0)
+    e_rms = 1000*dynonet.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])
+    mae = 1000 * dynonet.metrics.error_mae(y_meas[idx_test], y_hat[idx_test])
+    fit_idx = dynonet.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])
+    r_sq = dynonet.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])
+    u_rms = 1000*dynonet.metrics.error_rmse(u, 0)
 
     print(f"RMSE: {e_rms:.2f}mV\nMAE: {mae:.2f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.1f}\nRMSU: {u_rms:.2f}mV")

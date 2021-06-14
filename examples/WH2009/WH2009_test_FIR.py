@@ -2,14 +2,14 @@ import torch
 import pandas as pd
 import numpy as np
 import os
-from torchid.module.lti import SisoFirLinearDynamicalOperator
-from torchid.module.static import SisoStaticNonLinearity
+from dynonet.lti import SisoFirLinearDynamicalOperator
+from dynonet.static import SisoStaticNonLinearity
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import control
-import util.metrics
+import dynonet.metrics
 
 
 if __name__ == '__main__':
@@ -127,9 +127,9 @@ if __name__ == '__main__':
 
     # In[Metrics]
     idx_test = range(t_test_start + t_skip, t_test_end)
-    e_rms = 1000*util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
-    fit_idx = util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
-    r_sq = util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
+    e_rms = 1000*dynonet.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
+    fit_idx = dynonet.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
+    r_sq = dynonet.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 
     print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
 

@@ -1,7 +1,7 @@
 import torch
 import numpy as np  # temporary
 from torch.nn.parameter import Parameter
-from torchid.functional.lti import MimoLinearDynamicalOperatorFun
+from dynonet.functional import MimoLinearDynamicalOperatorFun
 
 
 class MimoLinearDynamicalOperator(torch.nn.Module):
