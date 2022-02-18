@@ -17,7 +17,7 @@ import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
 #sys.path.insert(0, os.path.abspath(os.path.join('..', 'dynonet')))
-sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', "src")))
 
 # -- Project information -----------------------------------------------------
 
@@ -26,9 +26,9 @@ copyright = '2020, Marco Forgione'
 author = 'Marco Forgione'
 
 # The short X.Y version
-version = ''
+version = '0.1'
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.1.1'
 
 
 # -- General configuration ---------------------------------------------------
