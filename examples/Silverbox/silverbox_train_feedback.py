@@ -129,17 +129,20 @@ if __name__ == '__main__':
 
     # In[Plot]
     plt.figure()
-    plt.plot(t_fit, y_fit, 'k', label="$y$")
-    plt.plot(t_fit, y_hidden, 'b', label="$\hat y$")
-    plt.plot(t_fit, y_lin, 'r', label="$y_{lin}$")
+    plt.plot(t_fit, y_fit, 'k', label="$y_{true}$")
+    plt.plot(t_fit, y_hidden, 'b', label="$y_{FB}$")
+    plt.plot(t_fit, y_lin, 'r', label="$y_{hat}$")
     plt.legend()
+    plt.savefig(os.path.join(model_folder,'Feedback_fit.pdf'))
     plt.show()
 
     plt.figure()
-    plt.plot(LOSS)
-    plt.plot(LOSS_FIT)
-    plt.plot(LOSS_CONSISTENCY)
+    plt.plot(LOSS, label='Total Loss')
+    plt.plot(LOSS_FIT, label='Output Loss')
+    plt.plot(LOSS_CONSISTENCY, label='Feedback Loss')
     plt.grid(True)
+    plt.legend()
+    plt.savefig(os.path.join(model_folder,'Feedback_train_loss.pdf'))
     plt.show()
 
     # In[Plot static non-linearity]
@@ -155,9 +158,10 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(in_nl, out_nl, 'b')
     #plt.plot(y1_lin, y1_nl, 'b*')
-    plt.xlabel('Static non-linearity input (-)')
-    plt.ylabel('Static non-linearity input (-)')
+    plt.xlabel('Static non-linearity input (hat)')
+    plt.ylabel('Static non-linearity output (hat)')
     plt.grid(True)
+    plt.savefig(os.path.join(model_folder,'F1_lin.pdf'))
     plt.show()
 
     idx_plot_nl = np.abs(in_nl) > 0.02
@@ -166,8 +170,9 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(in_nl[idx_plot_nl], out_nl[idx_plot_nl]/in_nl[idx_plot_nl], 'b')
     plt.plot(y_hidden[idx_plot_h], y_nl[idx_plot_h] / y_hidden[idx_plot_h], 'b*')
-    plt.xlabel('Static non-linearity input (-)')
-    plt.ylabel('Static non-linearity input (-)')
+    plt.xlabel('Static non-linearity input (FB)')
+    plt.ylabel('Static non-linearity output (FB)')
+    plt.savefig(os.path.join(model_folder,'F1_FB.pdf'))
     plt.grid(True)
     plt.show()
 

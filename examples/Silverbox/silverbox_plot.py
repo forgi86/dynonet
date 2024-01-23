@@ -45,11 +45,13 @@ if __name__ == '__main__':
 
     # In[Plot]
     fig, ax = plt.subplots(2, 1, sharex=True)
-    ax[0].plot(t_fit, y_fit, 'k', label="$u")
+    ax[0].plot(t_fit, y_fit, 'r', label="$y$")
     ax[0].grid()
-    ax[1].plot(t_fit, u_fit, 'k', label="$y$")
+    ax[0].set_ylabel('$y$')
+    ax[1].plot(t_fit, u_fit, 'k', label="$u$")
     ax[1].grid()
-    plt.legend()
+    ax[1].set_ylabel('$u$')
+#    plt.legend()
     plt.show()
 
 
