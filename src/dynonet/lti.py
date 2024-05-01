@@ -326,9 +326,14 @@ class StableSecondOrderMimoLinearDynamicalOperator(torch.nn.Module):
 
     def __init__(self, in_channels, out_channels):
         super(StableSecondOrderMimoLinearDynamicalOperator, self).__init__()
-        self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 2))
+        self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 3))
         self.rho = Parameter(torch.zeros(out_channels, in_channels, 1))
         self.psi = Parameter(torch.zeros((out_channels, in_channels, 1)))
+        self.out_channels = out_channels
+        self.in_channels = in_channels
+        self.n_b = 3
+        self.n_a = 2
+        self.n_k = 0
         with torch.no_grad():
             self.rho[:] = torch.randn(self.rho.shape) * 0.1
             self.psi[:] = torch.randn(self.rho.shape) * 0.1
@@ -340,6 +345,7 @@ class StableSecondOrderMimoLinearDynamicalOperator(torch.nn.Module):
         a_1 = -2 * r * torch.cos(beta)
         a_2 = r ** 2
         a_coeff = torch.cat((a_1, a_2), dim=-1)
+        # print (r)
         return MimoLinearDynamicalOperatorFun.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
 
 
