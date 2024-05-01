@@ -15,7 +15,7 @@ activation functions applied channel-wise; fully connected feed-forward neural n
 A 15-min presentation about dynoNet is available [here](https://www.youtube.com/watch?v=SrrlhGPLBrA&t=55s).
 
 # Folders:
-* [torchid](torchid):  PyTorch implementation of the linear dynamical operator (aka G-block in the paper) used in dynoNet
+* [dynonet](src/dynonet):  PyTorch implementation of the linear dynamical operator (aka G-block in the paper) used in dynoNet
 * [examples](examples): examples using dynoNet for system identification 
 * [util](util): definition of metrics R-square, RMSE, fit index 
 * [doc](doc): paper & slides
@@ -52,13 +52,23 @@ conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
 ```
 
 # Local installation:
-From a local copy of this repository, where setup.py and setup.cfg are located, enter:
+
+## From PyPI
+Type in terminal:
+```
+pip install dynonet
+```
+This will install the latest stable version packaged on PyPI: https://pypi.org/project/dynonet/
+
+## From a local copy of this repository
+Navigate to a local copy of this repository, where setup.py and setup.cfg are located.
+Then, type in terminal:
 
 ```
 pip install -e .
 ```
 
-This should install the dependencies, too. Then you can run the [examples](examples).
+
 # Citing
 
 If you find this project useful, we encourage you to
