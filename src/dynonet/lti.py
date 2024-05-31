@@ -326,9 +326,14 @@ class StableSecondOrderMimoLinearDynamicalOperator(torch.nn.Module):
 
     def __init__(self, in_channels, out_channels):
         super(StableSecondOrderMimoLinearDynamicalOperator, self).__init__()
-        self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 2))
+        self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 3))
         self.rho = Parameter(torch.zeros(out_channels, in_channels, 1))
         self.psi = Parameter(torch.zeros((out_channels, in_channels, 1)))
+        self.out_channels = out_channels
+        self.in_channels = in_channels
+        self.n_b = 3
+        self.n_a = 2
+        self.n_k = 0
         with torch.no_grad():
             self.rho[:] = torch.randn(self.rho.shape) * 0.1
             self.psi[:] = torch.randn(self.rho.shape) * 0.1
@@ -340,6 +345,7 @@ class StableSecondOrderMimoLinearDynamicalOperator(torch.nn.Module):
         a_1 = -2 * r * torch.cos(beta)
         a_2 = r ** 2
         a_coeff = torch.cat((a_1, a_2), dim=-1)
+        # print (r)
         return MimoLinearDynamicalOperatorFun.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
 
 
@@ -353,3 +359,53 @@ class StableSecondOrderSisoLinearDynamicalOperator(StableSecondOrderMimoLinearDy
 
     def __init__(self):
         super(StableSecondOrderSisoLinearDynamicalOperator, self).__init__(1, 1)  # in_channels, out_channels, n_b, n_a
+
+#########################################################
+
+class StableSecondOrderMimoLinearDynamicalOperatorX(torch.nn.Module):
+    r"""Like StableSecondOrderSisoLinearDynamicalOperator, using equation (32), which allows 2 distinct real poles.
+    The denominator of the transfer function is parametrized in terms of two poles (distinct reals or complex
+    conjugates) defined by unconstrained variables :math:: `\alpha_1` and :math:: `\alpha_2`
+
+    Args:
+        in_channels (int): Number of input channels
+        out_channels (int): Number of output channels
+
+    Shape:
+        - Input: (batch_size, seq_len, 1)
+        - Output: (batch_size, seq_len, 1)
+
+    Attributes:
+        alpha1 (Tensor): the learnable :math:: `\alpha_1` coefficients of the transfer function denominator
+        alpha2 (Tensor): the learnable :math:: `\alpha_2` coefficients of the transfer function denominator
+        b_coeff (Tensor): the learnable numerator coefficients
+
+    Examples::
+
+        >>> G = StableSecondOrderMimoLinearDynamicalOperator(in_channels=2, out_channels=4)
+    """
+
+    def __init__(self, in_channels, out_channels):
+        super(StableSecondOrderMimoLinearDynamicalOperatorX, self).__init__()
+        self.b_coeff = Parameter(torch.zeros(out_channels, in_channels, 3))
+        self.alpha1 = Parameter(torch.zeros(out_channels, in_channels, 1))
+        self.alpha2 = Parameter(torch.zeros((out_channels, in_channels, 1)))
+        self.out_channels = out_channels
+        self.in_channels = in_channels
+        self.n_b = 3
+        self.n_a = 2
+        self.n_k = 0
+        with torch.no_grad():
+            self.alpha1[:] = torch.randn(self.alpha1.shape) * 0.1
+            self.alpha2[:] = torch.randn(self.alpha2.shape) * 0.1
+            self.b_coeff[:] = torch.randn(self.b_coeff.shape) * 0.01
+
+    def forward(self, u_in, y_0=None, u_0=None):
+        a_1 = 2.0 * torch.tanh(self.alpha1)
+        a_1_abs = torch.abs(a_1)
+        a_2 = a_1_abs + (2.0 - a_1_abs) * torch.sigmoid(self.alpha2) - 1.0
+        a_coeff = torch.cat((a_1, a_2), dim=-1)
+        # print (r)
+        return MimoLinearDynamicalOperatorFun.apply(self.b_coeff, a_coeff, u_in, y_0, u_0)
+
+
